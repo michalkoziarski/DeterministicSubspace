@@ -1,7 +1,10 @@
 import os
 import urllib
 import zipfile
+import numpy as np
 import pandas as pd
+
+from sklearn import preprocessing
 
 
 def download(url, unpack=True):
@@ -20,15 +23,24 @@ def download(url, unpack=True):
             zip.extractall(root_path)
 
 
-def load(url, file_name, skiprows=0, unpack=True):
+def load(url, file_name, skiprows=0, unpack=True, encode=False):
     download(url, unpack=unpack)
-    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows).as_matrix()
+    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True).\
+        as_matrix().astype(np.float32)
     X, y = matrix[:, :-1], matrix[:, -1]
+
+    y = preprocessing.LabelEncoder().fit(y).transform(y)
+
+    if encode:
+        encoded = []
+        for i in range(X.shape[1]):
+            encoded.append(preprocessing.LabelEncoder().fit_transform(X[:, i]))
+        X = np.transpose(encoded)
 
     return X, y
 
 
-def load_keel(name):
+def load_keel(name, encode=False):
     base_url = 'http://sci2s.ugr.es/keel/dataset/data/classification/'
     url = '%s%s.zip' % (base_url, name)
     file_name = '%s.dat' % name
@@ -42,7 +54,7 @@ def load_keel(name):
             else:
                 break
 
-    return load(url, file_name, skiprows=metadata_lines)
+    return load(url, file_name, skiprows=metadata_lines, encode=encode)
 
 
 def load_all():
@@ -53,6 +65,6 @@ def load_all():
         'segment': load_keel('segment'),
         'sonar': load_keel('sonar'),
         'spambase': load_keel('spambase'),
-        'splice': load_keel('splice'),
+        'splice': load_keel('splice', encode=True),
         'texture': load_keel('texture')
     }
