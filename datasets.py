@@ -26,7 +26,7 @@ def download(url, unpack=True):
 def load(url, file_name, skiprows=0, unpack=True, encode=False):
     download(url, unpack=unpack)
     matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True).\
-        as_matrix().astype(np.float32)
+        as_matrix()
     X, y = matrix[:, :-1], matrix[:, -1]
 
     y = preprocessing.LabelEncoder().fit(y).transform(y)
@@ -37,7 +37,7 @@ def load(url, file_name, skiprows=0, unpack=True, encode=False):
             encoded.append(preprocessing.LabelEncoder().fit_transform(X[:, i]))
         X = np.transpose(encoded)
 
-    return X, y
+    return X.astype(np.float32), y.astype(np.float32)
 
 
 def load_keel(name, encode=False):
