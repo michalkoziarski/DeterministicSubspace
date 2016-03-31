@@ -5,12 +5,12 @@ from subspace import *
 from sklearn.tree import DecisionTreeClassifier
 
 
-matrix = pd.read_csv('data/ionosphere.csv', header=None).as_matrix()
+matrix = pd.read_csv('data/spambase.csv', header=None).as_matrix()
 
 random_scores = []
 gaussian_scores = []
 
-for _ in range(100):
+for _ in range(10):
     idx = np.random.permutation(len(matrix))
 
     X, y = matrix[idx, :-1], matrix[idx, -1]

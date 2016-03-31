@@ -250,6 +250,6 @@ class GaussianSubspaceClassifier(BaseSubspaceClassifier):
                 current_index += 1
 
         for count in counts:
-            score += math.erf(count / float(len(selected_clusters) + 1) - threshold)
+            score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * 1.96 * 3)
 
         return score
