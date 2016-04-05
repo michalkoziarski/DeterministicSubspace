@@ -269,6 +269,8 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
         super(QuickSubspaceClassifier, self).__init__(base_clf, k, n)
 
     def fit(self, X, y):
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
         self.clusters = [[] for _ in range(self.k)]
 
         for _ in range(self.n):
@@ -288,7 +290,7 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
 
         return self
 
-    def _inside_score(self, X, y, cluster, feature, cv=5):
+    def _inside_score(self, X, y, cluster, feature, cv=2):
         extended_cluster = cluster + [feature]
 
         return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
