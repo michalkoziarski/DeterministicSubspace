@@ -291,6 +291,9 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
     def _inside_score(self, X, y, cluster, feature, cv=2):
+        if feature in cluster:
+            return -np.inf
+        
         extended_cluster = cluster + [feature]
 
         return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
@@ -308,7 +311,9 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
             total += len(current_cluster)
 
             for current_feature in current_cluster:
+                print current_feature
+                print extended_cluster
                 if current_feature in extended_cluster:
                     count += 1
-
+        print 1. - (count / total)
         return 1. - (count / total)
