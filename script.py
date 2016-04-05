@@ -23,5 +23,5 @@ for dataset_name, dataset in datasets.iteritems():
             print scores.mean()
 
             scores = cross_validation.cross_val_score(
-                QuickSubspaceClassifier(clf, k=k, n=n), X, y, cv=5)
+                RoundRobinSubspaceClassifier(clf, k=k, n=n), X, y, cv=5)
             print scores.mean()
