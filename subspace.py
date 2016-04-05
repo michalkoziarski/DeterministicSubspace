@@ -253,3 +253,60 @@ class GaussianSubspaceClassifier(BaseSubspaceClassifier):
             score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * 1.96 * 3)
 
         return score
+
+
+class QuickSubspaceClassifier(BaseSubspaceClassifier):
+    def __init__(self, base_clf, k, n, alpha=0.5):
+        """
+        :param base_clf: base classifier
+        :param k: number of clusters
+        :param n: number of elements in a single cluster
+        :param alpha: score (inside cluster) coefficient
+        :param 1 - alpha: diversification (between clusters) coefficient
+        """
+        self.alpha = alpha
+
+        super(QuickSubspaceClassifier, self).__init__(base_clf, k, n)
+
+    def fit(self, X, y):
+        self.clusters = [[] for _ in range(self.k)]
+
+        for _ in range(self.n):
+            for index in range(self.k):
+                for feature in range(X.shape[1]):
+                    cluster = self.clusters[index]
+                    scores = [self.alpha * self._inside_score(X, y, cluster, feature) +
+                              (1. - self.alpha) * self._outside_score(cluster, feature, index)]
+                    cluster.append(np.argmax(scores))
+
+        self.clfs = []
+
+        for cluster in self.clusters:
+            clf = clone(self.base_clf)
+            clf.fit(X[:, cluster], y)
+            self.clfs.append(clf)
+
+        return self
+
+    def _inside_score(self, X, y, cluster, feature, cv=5):
+        extended_cluster = cluster + [feature]
+
+        return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
+
+    def _outside_score(self, cluster, feature, index):
+        count = 0.
+        total = 1e-9
+        extended_cluster = cluster + [feature]
+
+        for i in range(self.k):
+            if i == index:
+                continue
+
+            current_cluster = self.clusters[i]
+            total += len(current_cluster)
+
+            for current_feature in current_cluster:
+                if current_feature in extended_cluster:
+                    count += 1
+
+        return 1. - (count / total)
