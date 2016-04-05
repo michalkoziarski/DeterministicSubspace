@@ -2,12 +2,18 @@ from subspace import *
 from datasets import load_all
 from sklearn import cross_validation
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import GaussianNB
 
 
 datasets = load_all()
 
 classifiers = {
-    'DecisionTree': DecisionTreeClassifier()
+    'DecisionTree': DecisionTreeClassifier(),
+    'kNN': KNeighborsClassifier(),
+    'SVM': LinearSVC(),
+    'NaiveBayes': GaussianNB()
 }
 
 
