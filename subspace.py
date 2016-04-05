@@ -275,11 +275,19 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
 
         for _ in range(self.n):
             for index in range(self.k):
+                cluster = self.clusters[index]
+                scores = []
+
                 for feature in range(X.shape[1]):
-                    cluster = self.clusters[index]
-                    scores = [self.alpha * self._inside_score(X, y, cluster, feature) +
-                              (1. - self.alpha) * self._outside_score(cluster, feature, index)]
-                    cluster.append(np.argmax(scores))
+                    if feature in cluster:
+                        score = -np.inf
+                    else:
+                        score = self.alpha * self._inside_score(X, y, cluster, feature) + \
+                                (1. - self.alpha) * self._outside_score(cluster, feature, index)
+
+                    scores.append(score)
+
+                cluster.append(np.argmax(scores))
 
         self.clfs = []
 
@@ -291,9 +299,6 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
     def _inside_score(self, X, y, cluster, feature, cv=2):
-        if feature in cluster:
-            return -np.inf
-        
         extended_cluster = cluster + [feature]
 
         return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
@@ -311,9 +316,7 @@ class QuickSubspaceClassifier(BaseSubspaceClassifier):
             total += len(current_cluster)
 
             for current_feature in current_cluster:
-                print current_feature
-                print extended_cluster
                 if current_feature in extended_cluster:
                     count += 1
-        print 1. - (count / total)
+
         return 1. - (count / total)
