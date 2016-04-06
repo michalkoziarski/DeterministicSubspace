@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import mutual_info as mi
 
 from sklearn import cross_validation
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
