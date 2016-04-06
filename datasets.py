@@ -57,6 +57,13 @@ def load_keel(name, encode=False):
     return load(url, file_name, skiprows=metadata_lines, encode=encode)
 
 
+def load_winequality():
+    X_red, y_red = load_keel('winequality-red')
+    X_white, y_white = load_keel('winequality-white')
+
+    return np.concatenate((X_red, X_white)), np.concatenate((y_red, y_white))
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
@@ -66,5 +73,6 @@ def load_all():
         'sonar': load_keel('sonar'),
         'spambase': load_keel('spambase'),
         'splice': load_keel('splice', encode=True),
-        'texture': load_keel('texture')
+        'texture': load_keel('texture'),
+        'winequality': load_winequality()
     }
