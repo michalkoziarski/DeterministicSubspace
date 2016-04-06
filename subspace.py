@@ -115,6 +115,23 @@ class RoundRobinSubspaceClassifier(BaseSubspaceClassifier):
         return 1. - (count / total)
 
 
+class MutualInformationRoundRobinSubspaceClassifier(RoundRobinSubspaceClassifier):
+    def _inside_score(self, X, y, cluster, feature, cv=2):
+        if not hasattr(self, 'mutual_information'):
+            self.mutual_information = [[0 for i in range(X.shape[1])] for j in range(X.shape[1])]
+
+            for i in range(X.shape[1]):
+                for j in range(i, X.shape[1]):
+                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
+                    self.mutual_information[i][j] = mutual_information
+                    self.mutual_information[j][i] = mutual_information
+
+        if len(cluster) > 0:
+            return np.min([self.mutual_information[feature][c] for c in cluster])
+        else:
+            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
+
+
 class PruningSubspaceClassifier(BaseSubspaceClassifier):
     def __init__(self, base_clf, k, n, b):
         """

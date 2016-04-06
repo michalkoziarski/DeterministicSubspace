@@ -30,5 +30,5 @@ for dataset_name, dataset in datasets.iteritems():
             print 'Random Subspace: %.3f' % scores.mean()
 
             scores = cross_validation.cross_val_score(
-                RoundRobinSubspaceClassifier(clf, k=k, n=n), X, y, cv=5)
+                MutualInformationRoundRobinSubspaceClassifier(clf, k=k, n=n), X, y, cv=5)
             print 'Deterministic Subspace: %.3f' % scores.mean()
