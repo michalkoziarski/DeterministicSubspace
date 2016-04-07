@@ -47,10 +47,15 @@ def apply_encoding(X, y, encode_features=True):
     return X.astype(np.float32), y.astype(np.float32)
 
 
-def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=',', start=0):
+def load(url, file_name, skiprows=0, unpack=True, encode=True, separator=',', start=0, skipcols=None, nrows=None):
     download(url, unpack=unpack)
-    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
-                         error_bad_lines=False, sep=separator).replace([np.nan] + missing, np.nan).dropna().as_matrix()
+    df = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
+                     error_bad_lines=False, sep=separator, na_values='?', nrows=nrows)
+
+    if skipcols:
+        df = df.drop(df.columns[skipcols], axis=1)
+
+    matrix = df.dropna().as_matrix()
     X, y = matrix[:, start:-1], matrix[:, -1]
 
     return apply_encoding(X, y, encode)
@@ -84,7 +89,7 @@ def load_chronic_kidney_disease():
     url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00336/Chronic_Kidney_Disease.rar'
     file_name = os.path.join('Chronic_Kidney_Disease', 'chronic_kidney_disease_full.arff')
 
-    return load(url, file_name, skiprows=145, missing=['?'])
+    return load(url, file_name, skiprows=145)
 
 
 def load_biodegradation():
@@ -124,7 +129,14 @@ def load_internet_ads():
     url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/internet_ads/ad.data'
     file_name = 'ad.data'
 
-    return load(url, file_name, unpack=False, missing=['?'])
+    return load(url, file_name, unpack=False)
+
+
+def load_mutants():
+    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/p53/p53_new_2012.zip'
+    file_name = os.path.join('Data Sets', 'K9.data')
+
+    return load(url, file_name, skipcols=[-1])
 
 
 def load_all():
@@ -143,5 +155,6 @@ def load_all():
         'mice_protein_expression': load_mice_protein_expression(),
         'musk': load_musk(),
         'isolet': load_isolet(),
-        'internet_ads': load_internet_ads()
+        'internet_ads': load_internet_ads(),
+        'mutants': load_mutants()
     }
