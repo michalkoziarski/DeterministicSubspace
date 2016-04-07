@@ -126,5 +126,6 @@ def load_all():
         'winequality': load_winequality(),
         'chronic_kidney_disease': load_chronic_kidney_disease(),
         'biodegradation': load_biodegradation(),
-        'mice_protein_expression': load_mice_protein_expression()
+        'mice_protein_expression': load_mice_protein_expression(),
+        'musk': load_musk()
     }
