@@ -20,20 +20,20 @@ classifiers = {
 }
 
 
-def test(X, y, clf, dataset_name, clf_name, k, cv=5, file_name='log.csv'):
+def test(X, y, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', cv=5, file_name='log.csv'):
     if not os.path.exists('results'):
         os.makedirs('results')
 
     if not os.path.exists(os.path.join('results', file_name)):
         with open(os.path.join('results', file_name), 'w') as f:
-            f.write('classifier, dataset, k, accuracy\n')
+            f.write('dataset, method, classifier, k, alpha, b, omega, accuracy\n')
 
     score = cross_validation.cross_val_score(clf, X, y, cv=5).mean()
 
     with open(os.path.join('results', file_name), 'a') as f:
-        f.write('%s, %s, %d, %.3f\n' % (clf_name, dataset_name, k, score))
+        f.write('%s, %s, %s, %d, %s, %s, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, b, omega, score))
 
-    print 'Classifier: %s, dataset: %s, k: %d, score: %.3f' % (clf_name, dataset_name, k, score)
+    print 'Dataset: %s, method: %s, classifier: %s, k: %d, alpha: %s, b: %s, omega: %s, accuracy: %.3f' % (dataset_name, method, clf_name, k, alpha, b, omega, score)
 
 
 for dataset_name, dataset in datasets.iteritems():
@@ -46,8 +46,10 @@ for dataset_name, dataset in datasets.iteritems():
 
         for clf_name, clf in classifiers.iteritems():
             test(X, y, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
-                 'RandomSubspace#%s' % clf_name, k)
+                 clf_name, k, 'RandomSubspace')
 
             for alpha in [0., 0.25, 0.5, 0.75, 1.]:
-                test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=3, alpha=alpha),
-                     dataset_name, 'DeterministicSubspace(alpha=%.2f)#%s' % (alpha, clf_name), k)
+                for b in [3]:
+                    for omega in [6.]:
+                        test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b, alpha=alpha, omega=omega),
+                             dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega)
