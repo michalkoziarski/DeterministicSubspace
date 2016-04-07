@@ -47,11 +47,11 @@ def apply_encoding(X, y, encode_features=True):
     return X.astype(np.float32), y.astype(np.float32)
 
 
-def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=','):
+def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=',', start=0):
     download(url, unpack=unpack)
     matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
                          error_bad_lines=False, sep=separator).replace([np.nan] + missing, np.nan).dropna().as_matrix()
-    X, y = matrix[:, :-1], matrix[:, -1]
+    X, y = matrix[:, start:-1], matrix[:, -1]
 
     return apply_encoding(X, y, encode)
 
@@ -104,6 +104,13 @@ def load_mice_protein_expression():
     X, y = matrix[:, 1:-1], matrix[:, -1]
 
     return apply_encoding(X, y)
+
+
+def load_musk():
+    url = 'https://s3.amazonaws.com/michalkoziarski/clean2.data'
+    file_name = 'clean2.data'
+
+    return load(url, file_name, unpack=False, start=2)
 
 
 def load_all():
