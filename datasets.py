@@ -107,10 +107,17 @@ def load_mice_protein_expression():
 
 
 def load_musk():
-    url = 'https://s3.amazonaws.com/michalkoziarski/clean2.data'
-    file_name = 'clean2.data'
+    url = 'https://s3.amazonaws.com/michalkoziarski/musk.data.zip'
+    file_name = 'musk.data'
 
-    return load(url, file_name, unpack=False, start=2)
+    return load(url, file_name, start=2)
+
+
+def load_isolet():
+    url = 'https://s3.amazonaws.com/michalkoziarski/isolet.data.zip'
+    file_name = 'isolet.data'
+
+    return load(url, file_name)
 
 
 def load_all():
@@ -127,5 +134,6 @@ def load_all():
         'chronic_kidney_disease': load_chronic_kidney_disease(),
         'biodegradation': load_biodegradation(),
         'mice_protein_expression': load_mice_protein_expression(),
-        'musk': load_musk()
+        'musk': load_musk(),
+        'isolet': load_isolet()
     }
