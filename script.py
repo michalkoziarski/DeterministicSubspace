@@ -48,5 +48,5 @@ for dataset_name, dataset in datasets.iteritems():
             test(X, y, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
                  'RandomSubspace#%s' % clf_name, k)
 
-            test(X, y, MutualInformationRoundRobinSubspaceClassifier(clf, k=k, n=n),
-                 dataset_name, 'MutualInformationRoundRobin#%s' % clf_name, k)
+            test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n),
+                 dataset_name, 'DeterministicSubspace#%s' % clf_name, k)

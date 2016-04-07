@@ -4,6 +4,7 @@ import mutual_info as mi
 
 from sklearn import cross_validation
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -49,23 +50,29 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
 
-class RoundRobinSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5):
+class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=2, omega=4.):
         """
         :param alpha: score (inside cluster) coefficient
         :param 1 - alpha: diversification (between clusters) coefficient
+        :param b: number of clusters (multiplier of k) before pruning
+        :param omega: multiplier used with error function
         """
-        self.alpha = alpha
+        assert b >= 1
 
-        super(RoundRobinSubspaceClassifier, self).__init__(base_clf, k, n)
+        self.alpha = alpha
+        self.b = b
+        self.omega = omega
+
+        super(DeterministicSubspaceClassifier, self).__init__(base_clf, k, n)
 
     def fit(self, X, y):
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit(y)
-        self.clusters = [[] for _ in range(self.k)]
+        self.clusters = [[] for _ in range(int(self.k * self.b))]
 
         for _ in range(self.n):
-            for index in range(self.k):
+            for index in range(int(self.k * self.b)):
                 cluster = self.clusters[index]
                 scores = []
 
@@ -73,11 +80,28 @@ class RoundRobinSubspaceClassifier(BaseSubspaceClassifier):
                     if feature in cluster:
                         score = -np.inf
                     else:
-                        score = self._score(X, y, cluster, feature, index)
+                        score = score = self._score(X, y, cluster, feature, index)
 
                     scores.append(score)
 
                 cluster.append(np.argmax(scores))
+
+        if self.b > 1:
+            selected_clusters = []
+
+            for _ in range(self.k):
+                scores = []
+                counts, skf = self._correct_prediction_count(X, y, selected_clusters)
+
+                for cluster in self.clusters:
+                    if cluster in selected_clusters:
+                        scores.append(-np.inf)
+                    else:
+                        scores.append(self._pruning_score(X, y, cluster, selected_clusters, counts, skf))
+
+                selected_clusters.append(self.clusters[np.argmax(scores)])
+
+                self.clusters = selected_clusters
 
         self.clfs = []
 
@@ -92,10 +116,20 @@ class RoundRobinSubspaceClassifier(BaseSubspaceClassifier):
         return self.alpha * self._inside_score(X, y, cluster, feature) + \
                (1. - self.alpha) * self._outside_score(cluster, feature, index)
 
-    def _inside_score(self, X, y, cluster, feature, cv=2):
-        extended_cluster = cluster + [feature]
+    def _inside_score(self, X, y, cluster, feature):
+        if not hasattr(self, 'mutual_information'):
+            self.mutual_information = [[0 for i in range(X.shape[1])] for j in range(X.shape[1])]
 
-        return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
+            for i in range(X.shape[1]):
+                for j in range(i, X.shape[1]):
+                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
+                    self.mutual_information[i][j] = mutual_information
+                    self.mutual_information[j][i] = mutual_information
+
+        if len(cluster) > 0:
+            return np.min([self.mutual_information[feature][c] for c in cluster])
+        else:
+            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
 
     def _outside_score(self, cluster, feature, index):
         count = 0.
@@ -115,100 +149,45 @@ class RoundRobinSubspaceClassifier(BaseSubspaceClassifier):
 
         return 1. - (count / total)
 
+    def _correct_prediction_count(self, X, y, selected_clusters, cv=2):
+        skf = StratifiedKFold(y, cv)
+        counts = [0 for _ in range(len(y))]
 
-class MutualInformationRoundRobinSubspaceClassifier(RoundRobinSubspaceClassifier):
-    def _inside_score(self, X, y, cluster, feature, cv=2):
-        if not hasattr(self, 'mutual_information'):
-            self.mutual_information = [[0 for i in range(X.shape[1])] for j in range(X.shape[1])]
+        for cluster in selected_clusters:
+            current_index = 0
 
-            for i in range(X.shape[1]):
-                for j in range(i, X.shape[1]):
-                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
-                    self.mutual_information[i][j] = mutual_information
-                    self.mutual_information[j][i] = mutual_information
+            for train, test in skf:
+                clf = clone(self.base_clf)
+                clf.fit(X[train][:, cluster], y[train])
+                predictions = clf.predict(X[test][:, cluster])
 
-        if len(cluster) > 0:
-            return np.min([self.mutual_information[feature][c] for c in cluster])
-        else:
-            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
+                for prediction, truth in zip(predictions, y[test]):
+                    if prediction == truth:
+                        counts[current_index] += 1
 
+                    current_index += 1
 
-class PruningSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, b):
-        """
-        :param b: number of clusters before pruning
-        """
+        return counts, skf
 
-        assert b >= k
+    def _pruning_score(self, X, y, cluster, selected_clusters, counts, skf):
+        counts = list(counts)
+        unique = len(set(y))
+        threshold = math.ceil(unique / 2.) / unique
+        current_index = 0
+        score = 0.
 
-        self.b = b
-
-        super(PruningSubspaceClassifier, self).__init__(base_clf, k, n)
-
-    def fit(self, X, y):
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
-        self.clusters = [[] for _ in range(self.b)]
-
-        for _ in range(self.n):
-            for index in range(self.b):
-                cluster = self.clusters[index]
-                scores = []
-
-                for feature in range(X.shape[1]):
-                    if feature in cluster:
-                        score = -np.inf
-                    else:
-                        score = self._inside_score(X, y, cluster, feature, index)
-
-                    scores.append(score)
-
-                cluster.append(np.argmax(scores))
-
-        selected_clusters = []
-
-        for _ in range(self.k):
-            scores = []
-
-            for index in range(self.b):
-                cluster = self.clusters[index]
-
-                if cluster in selected_clusters:
-                    score = -np.inf
-                else:
-                    score = self._outside_score(cluster, selected_clusters)
-
-                scores.append(score)
-
-            selected_clusters.append(self.clusters[np.argmax(scores)])
-
-        self.clusters = selected_clusters
-        self.clfs = []
-
-        for cluster in self.clusters:
+        for train, test in skf:
             clf = clone(self.base_clf)
-            clf.fit(X[:, cluster], y)
-            self.clfs.append(clf)
+            clf.fit(X[train][:, cluster], y[train])
+            predictions = clf.predict(X[test][:, cluster])
 
-        return self
+            for prediction, truth in zip(predictions, y[test]):
+                if prediction == truth:
+                    counts[current_index] += 1
 
-    def _inside_score(self, X, y, cluster, feature, cv=2):
-        extended_cluster = cluster + [feature]
+                current_index += 1
 
-        return cross_validation.cross_val_score(self.base_clf, X[:, extended_cluster], y, cv=cv).mean()
+        for count in counts:
+            score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * self.omega)
 
-    def _outside_score(self, cluster, selected_clusters):
-        count = 0.
-        total = 1e-9
-
-        for selected_cluster in selected_clusters:
-            if cluster == selected_cluster:
-                continue
-
-            total += len(selected_cluster)
-
-            for feature in selected_cluster:
-                if feature in cluster:
-                    count += 1
-
-        return 1. - (count / total)
+        return score
