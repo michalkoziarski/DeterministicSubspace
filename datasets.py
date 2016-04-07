@@ -1,6 +1,7 @@
 import os
 import urllib
 import zipfile
+import rarfile
 import numpy as np
 import pandas as pd
 
@@ -19,14 +20,20 @@ def download(url, unpack=True):
         urllib.urlretrieve(url, download_path)
 
     if unpack:
-        with zipfile.ZipFile(download_path) as zip:
-            zip.extractall(root_path)
+        if name.endswith('.zip'):
+            with zipfile.ZipFile(download_path) as zip:
+                zip.extractall(root_path)
+        elif name.endswith('.rar'):
+            with rarfile.RarFile(download_path) as rar:
+                rar.extractall(root_path)
+        else:
+            raise Exception('Unrecognized file type.')
 
 
-def load(url, file_name, skiprows=0, unpack=True, encode=False):
+def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[]):
     download(url, unpack=unpack)
-    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True).\
-        as_matrix()
+    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
+                         error_bad_lines=False).replace([np.nan] + missing, np.nan).dropna().as_matrix()
     X, y = matrix[:, :-1], matrix[:, -1]
 
     y = preprocessing.LabelEncoder().fit(y).transform(y)
@@ -34,13 +41,17 @@ def load(url, file_name, skiprows=0, unpack=True, encode=False):
     if encode:
         encoded = []
         for i in range(X.shape[1]):
-            encoded.append(preprocessing.LabelEncoder().fit_transform(X[:, i]))
+            try:
+                float(df.iloc[0, i])
+                encoded.append(X[:, i])
+            except:
+                encoded.append(preprocessing.LabelEncoder().fit_transform(X[:, i]))
         X = np.transpose(encoded)
 
     return X.astype(np.float32), y.astype(np.float32)
 
 
-def load_keel(name, encode=False):
+def load_keel(name, encode=True):
     base_url = 'http://sci2s.ugr.es/keel/dataset/data/classification/'
     url = '%s%s.zip' % (base_url, name)
     file_name = '%s.dat' % name
@@ -64,6 +75,13 @@ def load_winequality():
     return np.concatenate((X_red, X_white)), np.concatenate((y_red, y_white))
 
 
+def load_chronic_kidney_disease():
+    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00336/Chronic_Kidney_Disease.rar'
+    file_name = os.path.join('Chronic_Kidney_Disease', 'chronic_kidney_disease_full.arff')
+
+    return load(url, file_name, skiprows=145, missing=['?'])
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
@@ -72,7 +90,8 @@ def load_all():
         'segment': load_keel('segment'),
         'sonar': load_keel('sonar'),
         'spambase': load_keel('spambase'),
-        'splice': load_keel('splice', encode=True),
+        'splice': load_keel('splice'),
         'texture': load_keel('texture'),
-        'winequality': load_winequality()
+        'winequality': load_winequality(),
+        'chronic_kidney_disease': load_chronic_kidney_disease()
     }
