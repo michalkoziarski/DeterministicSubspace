@@ -48,5 +48,6 @@ for dataset_name, dataset in datasets.iteritems():
             test(X, y, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
                  'RandomSubspace#%s' % clf_name, k)
 
-            test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n),
-                 dataset_name, 'DeterministicSubspace#%s' % clf_name, k)
+            for alpha in [i / 10. for i in range(11)]:
+                test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=1, alpha=alpha),
+                     dataset_name, 'DeterministicSubspace(alpha=%.1f)#%s' % (alpha, clf_name), k)

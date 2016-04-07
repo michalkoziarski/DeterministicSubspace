@@ -51,7 +51,7 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
 
 
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5, b=2, omega=4.):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=3, omega=6.):
         """
         :param alpha: score (inside cluster) coefficient
         :param 1 - alpha: diversification (between clusters) coefficient
@@ -101,7 +101,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
 
                 selected_clusters.append(self.clusters[np.argmax(scores)])
 
-                self.clusters = selected_clusters
+            self.clusters = selected_clusters
 
         self.clfs = []
 
