@@ -30,10 +30,10 @@ def download(url, unpack=True):
             raise Exception('Unrecognized file type.')
 
 
-def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[]):
+def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=','):
     download(url, unpack=unpack)
     matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
-                         error_bad_lines=False).replace([np.nan] + missing, np.nan).dropna().as_matrix()
+                         error_bad_lines=False, sep=separator).replace([np.nan] + missing, np.nan).dropna().as_matrix()
     X, y = matrix[:, :-1], matrix[:, -1]
 
     y = preprocessing.LabelEncoder().fit(y).transform(y)
@@ -82,6 +82,13 @@ def load_chronic_kidney_disease():
     return load(url, file_name, skiprows=145, missing=['?'])
 
 
+def load_biodegradation():
+    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00254/biodeg.csv'
+    file_name = 'biodeg.csv'
+
+    return load(url, file_name, unpack=False, separator=';')
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
@@ -93,5 +100,6 @@ def load_all():
         'splice': load_keel('splice'),
         'texture': load_keel('texture'),
         'winequality': load_winequality(),
-        'chronic_kidney_disease': load_chronic_kidney_disease()
+        'chronic_kidney_disease': load_chronic_kidney_disease(),
+        'biodegradation': load_biodegradation()
     }
