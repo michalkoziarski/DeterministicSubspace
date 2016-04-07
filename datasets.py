@@ -120,6 +120,13 @@ def load_isolet():
     return load(url, file_name)
 
 
+def load_internet_ads():
+    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/internet_ads/ad.data'
+    file_name = 'ad.data'
+
+    return load(url, file_name, unpack=False, missing=['?'])
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
@@ -135,5 +142,6 @@ def load_all():
         'biodegradation': load_biodegradation(),
         'mice_protein_expression': load_mice_protein_expression(),
         'musk': load_musk(),
-        'isolet': load_isolet()
+        'isolet': load_isolet(),
+        'internet_ads': load_internet_ads()
     }
