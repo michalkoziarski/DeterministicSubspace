@@ -30,25 +30,30 @@ def download(url, unpack=True):
             raise Exception('Unrecognized file type.')
 
 
-def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=','):
-    download(url, unpack=unpack)
-    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
-                         error_bad_lines=False, sep=separator).replace([np.nan] + missing, np.nan).dropna().as_matrix()
-    X, y = matrix[:, :-1], matrix[:, -1]
-
+def apply_encoding(X, y, encode_features=True):
     y = preprocessing.LabelEncoder().fit(y).transform(y)
 
-    if encode:
+    if encode_features:
         encoded = []
+
         for i in range(X.shape[1]):
             try:
-                float(df.iloc[0, i])
+                float(X[0, i])
                 encoded.append(X[:, i])
             except:
                 encoded.append(preprocessing.LabelEncoder().fit_transform(X[:, i]))
         X = np.transpose(encoded)
 
     return X.astype(np.float32), y.astype(np.float32)
+
+
+def load(url, file_name, skiprows=0, unpack=True, encode=True, missing=[], separator=','):
+    download(url, unpack=unpack)
+    matrix = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
+                         error_bad_lines=False, sep=separator).replace([np.nan] + missing, np.nan).dropna().as_matrix()
+    X, y = matrix[:, :-1], matrix[:, -1]
+
+    return apply_encoding(X, y, encode)
 
 
 def load_keel(name, encode=True):
@@ -89,6 +94,18 @@ def load_biodegradation():
     return load(url, file_name, unpack=False, separator=';')
 
 
+def load_mice_protein_expression():
+    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00342/Data_Cortex_Nuclear.xls'
+    file_name = 'Data_Cortex_Nuclear.xls'
+
+    download(url, unpack=False)
+
+    matrix = pd.read_excel(os.path.join('data', 'Data_Cortex_Nuclear.xls')).dropna().as_matrix()
+    X, y = matrix[:, 1:-1], matrix[:, -1]
+
+    return apply_encoding(X, y)
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
@@ -101,5 +118,6 @@ def load_all():
         'texture': load_keel('texture'),
         'winequality': load_winequality(),
         'chronic_kidney_disease': load_chronic_kidney_disease(),
-        'biodegradation': load_biodegradation()
+        'biodegradation': load_biodegradation(),
+        'mice_protein_expression': load_mice_protein_expression()
     }
