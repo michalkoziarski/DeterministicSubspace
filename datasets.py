@@ -149,7 +149,7 @@ def load_all():
         'vehicle': load_keel('vehicle'),
         'mushroom': load_keel('mushroom'),
         'automobile': load_keel('automobile'),
-        'ionsphere': load_keel('ionsphere'),
+        'ionosphere': load_keel('ionosphere'),
         'thyroid': load_keel('thyroid'),
         'wdbc': load_keel('wdbc'),
         'spectfheart': load_keel('spectfheart'),
