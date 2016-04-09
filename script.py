@@ -1,7 +1,9 @@
 import os
+import sys
 
 from subspace import *
-from datasets import load_all
+from datasets import *
+from time import gmtime, strftime
 from sklearn import cross_validation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -10,7 +12,15 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 
 
-datasets = load_all()
+if len(sys.argv) > 1:
+    try:
+        dataset = globals()['load_' + sys.argv[1]]()
+    except:
+        dataset = globals()['load_keel'](sys.argv[1])
+
+    datasets = { sys.argv[1]: dataset }
+else:
+    datasets = load_all()
 
 classifiers = {
     'DecisionTree': DecisionTreeClassifier(),
@@ -20,7 +30,12 @@ classifiers = {
 }
 
 
-def test(X, y, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', cv=5, file_name='log.csv'):
+def test(X, y, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', cv=5, date=None):
+    if date:
+        file_name = '%s_%s.csv' % (dataset_name, date)
+    else:
+        file_name = '%s.csv' % dataset_name
+
     if not os.path.exists('results'):
         os.makedirs('results')
 
@@ -37,19 +52,20 @@ def test(X, y, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', ome
 
 
 for dataset_name, dataset in datasets.iteritems():
+    date = strftime('%Y_%m_%d_%H-%M-%S', gmtime())
     X, y = dataset
     n = X.shape[1] / 2
 
     for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
         test(X, y, RandomForestClassifier(n_estimators=k), dataset_name,
-             'RandomForest', k)
+             'RandomForest', k, date=date)
 
         for clf_name, clf in classifiers.iteritems():
             test(X, y, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
-                 clf_name, k, 'RandomSubspace')
+                 clf_name, k, 'RandomSubspace', date=date)
 
             for alpha in [0., 0.25, 0.5, 0.75, 1.]:
                 for b in [1]:
                     for omega in [6.]:
                         test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b, alpha=alpha, omega=omega),
-                             dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega)
+                             dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega, date=date)
