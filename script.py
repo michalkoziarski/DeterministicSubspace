@@ -49,7 +49,7 @@ for dataset_name, dataset in datasets.iteritems():
                  clf_name, k, 'RandomSubspace')
 
             for alpha in [0., 0.25, 0.5, 0.75, 1.]:
-                for b in [3]:
+                for b in [1]:
                     for omega in [6.]:
                         test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b, alpha=alpha, omega=omega),
                              dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega)
