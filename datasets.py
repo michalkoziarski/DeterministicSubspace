@@ -1,7 +1,6 @@
 import os
 import urllib
 import zipfile
-import rarfile
 import numpy as np
 import pandas as pd
 
@@ -23,9 +22,6 @@ def download(url, unpack=True):
         if name.endswith('.zip'):
             with zipfile.ZipFile(download_path) as zip:
                 zip.extractall(root_path)
-        elif name.endswith('.rar'):
-            with rarfile.RarFile(download_path) as rar:
-                rar.extractall(root_path)
         else:
             raise Exception('Unrecognized file type.')
 
@@ -86,10 +82,10 @@ def load_winequality():
 
 
 def load_chronic_kidney_disease():
-    url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00336/Chronic_Kidney_Disease.rar'
-    file_name = os.path.join('Chronic_Kidney_Disease', 'chronic_kidney_disease_full.arff')
+    url = 'https://s3.amazonaws.com/michalkoziarski/chronic_kidney_disease_full.arff'
+    file_name = 'chronic_kidney_disease_full.arff'
 
-    return load(url, file_name, skiprows=145)
+    return load(url, file_name, unpack=False, skiprows=145)
 
 
 def load_biodegradation():
