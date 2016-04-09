@@ -3,6 +3,7 @@ import sys
 
 from subspace import *
 from datasets import *
+from mutual_info import mutual_information_2d
 from time import gmtime, strftime
 from sklearn import cross_validation
 from sklearn.tree import DecisionTreeClassifier
@@ -56,6 +57,14 @@ for dataset_name, dataset in datasets.iteritems():
     X, y = dataset
     n = X.shape[1] / 2
 
+    mutual_information = [[0 for i in range(X.shape[1])] for j in range(X.shape[1])]
+
+    for i in range(X.shape[1]):
+        for j in range(i, X.shape[1]):
+            mi = mutual_information_2d(X[:, i], X[:, j], normalized=True)
+            mutual_information[i][j] = mi
+            mutual_information[j][i] = mi
+
     for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
         test(X, y, RandomForestClassifier(n_estimators=k), dataset_name,
              'RandomForest', k, date=date)
@@ -67,5 +76,6 @@ for dataset_name, dataset in datasets.iteritems():
             for alpha in [0., 0.25, 0.5, 0.75, 1.]:
                 for b in [1]:
                     for omega in [6.]:
-                        test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b, alpha=alpha, omega=omega),
+                        test(X, y, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b,
+                             alpha=alpha, omega=omega, mutual_information=mutual_information),
                              dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega, date=date)

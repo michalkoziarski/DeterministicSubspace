@@ -51,7 +51,7 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
 
 
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5, b=3, omega=6.):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=3, omega=6., mutual_information=None):
         """
         :param alpha: score (inside cluster) coefficient
         :param 1 - alpha: diversification (between clusters) coefficient
@@ -63,6 +63,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         self.alpha = alpha
         self.b = b
         self.omega = omega
+        self.mutual_information = mutual_information
 
         super(DeterministicSubspaceClassifier, self).__init__(base_clf, k, n)
 
