@@ -1,8 +1,25 @@
 import os
 import pandas as pd
 
+from datasets import *
 
-def print_table(k, b=None, omega=None):
+
+def get_number_of_features(df):
+    datasets = df['dataset'].unique()
+    n_features = []
+
+    for i in range(len(datasets)):
+        try:
+            X, _ = globals()['load_' + datasets[i]]()
+        except:
+            X, _ = globals()['load_keel'](datasets[i])
+
+        n_features.append(X.shape[1])
+
+    return n_features
+
+
+def load_df_and_datasets(k=5):
     frames = []
 
     for file_name in os.listdir('results'):
@@ -10,6 +27,42 @@ def print_table(k, b=None, omega=None):
 
     df = pd.concat(frames)
     df = df[df['k'] == k].reset_index()
+
+    datasets = df['dataset'].unique()
+    features = get_number_of_features(df)
+
+    return df, datasets[np.argsort(features)]
+
+
+def print_datasets():
+    _, datasets = load_df_and_datasets()
+
+    print ('\\begin{table}\n'
+           '\\caption{Datasets}\n'
+           '\\centering\n'
+           '\\setlength{\\tabcolsep}{2pt}\n'
+           '\\begin{tabular}{cccc}\n'
+           '\\hline\\noalign{\\smallskip}\n'
+           '\\# & Name & Features & Samples \\\\\n'
+           '\\noalign{\\smallskip}\n'
+           '\\hline\n'
+           '\\noalign{\\smallskip}')
+
+    for i in range(len(datasets)):
+        try:
+            X, _ = globals()['load_' + datasets[i]]()
+        except:
+            X, _ = globals()['load_keel'](datasets[i])
+
+        print '%d & %s & %d & %d \\\\' % (i + 1, datasets[i].replace('_', ' '), X.shape[1], X.shape[0])
+
+    print ('\\hline\n'
+           '\\end{tabular}\n'
+           '\\end{table}\n')
+
+
+def print_table(k, b=None, omega=None):
+    df, datasets = load_df_and_datasets(k)
 
     print ('\\begin{table}\n'
            '\\caption{k = ' + str(k) + '}\n'
@@ -26,8 +79,6 @@ def print_table(k, b=None, omega=None):
            '\\noalign{\\smallskip}\n'
            '\\hline\n'
            '\\noalign{\\smallskip}')
-
-    datasets = sorted(df['dataset'].unique())
 
     for i in range(len(datasets)):
         row = '%d & ' % (i + 1)
@@ -58,6 +109,8 @@ def print_table(k, b=None, omega=None):
            '}\n'
            '\\end{table}\n')
 
+
+print_datasets()
 
 for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
     print_table(k)
