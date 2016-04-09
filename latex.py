@@ -12,7 +12,7 @@ def print_table(k, b=None, omega=None):
     df = df[df['k'] == k].reset_index()
 
     print ('\\begin{table}\n'
-           '\\caption{}\n'
+           '\\caption{k = ' + str(k) + '}\n'
            '\\centering\n'
            '\\setlength{\\tabcolsep}{2pt}\n'
            '\\resizebox{\\textwidth}{!}{\n'
@@ -59,4 +59,5 @@ def print_table(k, b=None, omega=None):
            '\\end{table}\n')
 
 
-print_table(5)
+for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
+    print_table(k)
