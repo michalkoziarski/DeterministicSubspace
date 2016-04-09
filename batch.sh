@@ -6,4 +6,4 @@
 module add plgrid/tools/python/2.7.9
 
 cd $HOME/DeterministicSubspace
-python script.py
+python script.py $1
