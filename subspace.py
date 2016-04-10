@@ -2,6 +2,7 @@ import math
 import numpy as np
 import mutual_info as mi
 
+from collections import Counter
 from sklearn import cross_validation
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cross_validation import StratifiedKFold
@@ -51,12 +52,13 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
 
 
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5, b=3, omega=6., mutual_information=None):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=2, omega=1., mutual_information=None):
         """
         :param alpha: score (inside cluster) coefficient
         :param 1 - alpha: diversification (between clusters) coefficient
         :param b: number of clusters (multiplier of k) before pruning
         :param omega: multiplier used with error function
+        :param mutual_information: precalculated mutual information between every feature
         """
         assert b >= 1
 
@@ -92,13 +94,13 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
 
             for _ in range(self.k):
                 scores = []
-                counts, skf = self._correct_prediction_count(X, y, selected_clusters)
+                counts, thresholds, skf = self._correct_prediction_count(X, y, selected_clusters)
 
                 for cluster in self.clusters:
                     if cluster in selected_clusters:
                         scores.append(-np.inf)
                     else:
-                        scores.append(self._pruning_score(X, y, cluster, selected_clusters, counts, skf))
+                        scores.append(self._pruning_score(X, y, cluster, selected_clusters, counts, thresholds, skf))
 
                 selected_clusters.append(self.clusters[np.argmax(scores)])
 
@@ -150,30 +152,43 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
 
         return 1. - (count / total)
 
-    def _correct_prediction_count(self, X, y, selected_clusters, cv=2):
+    def _correct_prediction_count(self, X, y, selected_clusters, cv=5):
         skf = StratifiedKFold(y, cv)
-        counts = [0 for _ in range(len(y))]
+        predictions = []
+        counts = []
+        thresholds = []
 
         for cluster in selected_clusters:
-            current_index = 0
+            cluster_predictions = np.array([])
 
             for train, test in skf:
                 clf = clone(self.base_clf)
                 clf.fit(X[train][:, cluster], y[train])
-                predictions = clf.predict(X[test][:, cluster])
+                cluster_predictions = np.append(cluster_predictions, clf.predict(X[test][:, cluster]))
 
-                for prediction, truth in zip(predictions, y[test]):
-                    if prediction == truth:
-                        counts[current_index] += 1
+            predictions.append(cluster_predictions)
 
-                    current_index += 1
+        if len(predictions) > 0:
+            predictions = np.vstack(predictions)
 
-        return counts, skf
+        for i in range(len(y)):
+            if len(predictions) > 0:
+                counter = Counter(predictions[:, i])
+                counts.append(counter[y[i]] if y[i] in counter.keys() else 0)
 
-    def _pruning_score(self, X, y, cluster, selected_clusters, counts, skf):
+                if len(counter) > 1:
+                    sorted_values = sorted(counter.values())
+                    thresholds.append((math.floor((sorted_values[0] + sorted_values[1]) / 2.) + 1) / len(set(y)))
+                else:
+                    thresholds.append(0.5)
+            else:
+                counts.append(0)
+                thresholds.append(1.)
+
+        return counts, thresholds, skf
+
+    def _pruning_score(self, X, y, cluster, selected_clusters, counts, thresholds, skf):
         counts = list(counts)
-        unique = len(set(y))
-        threshold = math.ceil(unique / 2.) / unique
         current_index = 0
         score = 0.
 
@@ -188,7 +203,9 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
 
                 current_index += 1
 
-        for count in counts:
+        for i in range(len(counts)):
+            count = counts[i]
+            threshold = thresholds[i]
             score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * self.omega)
 
         return score
