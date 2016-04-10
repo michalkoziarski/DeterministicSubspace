@@ -19,14 +19,16 @@ def get_number_of_features(df):
     return n_features
 
 
-def load_df_and_datasets(k=5):
+def load_df_and_datasets(k=None):
     frames = []
 
     for file_name in os.listdir('results'):
         frames.append(pd.read_csv(os.path.join('results', file_name), sep=',', skipinitialspace=True))
 
     df = pd.concat(frames)
-    df = df[df['k'] == k].reset_index()
+
+    if k:
+        df = df[df['k'] == k].reset_index()
 
     datasets = df['dataset'].unique()
     features = get_number_of_features(df)
@@ -110,7 +112,8 @@ def print_table(k, b=None, omega=None):
            '\\end{table}\n')
 
 
-print_datasets()
+if __name__ == '__main__':
+    print_datasets()
 
-for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
-    print_table(k)
+    for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
+        print_table(k)
