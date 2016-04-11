@@ -19,7 +19,7 @@ def get_number_of_features(df):
     return n_features
 
 
-def load_df_and_datasets(k=None):
+def load_df_and_datasets(k=None, b=None):
     frames = []
 
     for file_name in os.listdir('results'):
@@ -29,6 +29,9 @@ def load_df_and_datasets(k=None):
 
     if k:
         df = df[df['k'] == k].reset_index()
+
+    if b:
+        df = df[(df['b'] == b) | (df['b'] == '-')].reset_index()
 
     datasets = df['dataset'].unique()
     features = get_number_of_features(df)
@@ -64,7 +67,7 @@ def print_datasets():
 
 
 def print_table(k, b=None, omega=None):
-    df, datasets = load_df_and_datasets(k)
+    df, datasets = load_df_and_datasets(k, b)
 
     print ('\\begin{table}\n'
            '\\caption{k = ' + str(k) + '}\n'
@@ -89,7 +92,7 @@ def print_table(k, b=None, omega=None):
         for classifier in ['SVM', 'kNN', 'DecisionTree', 'NaiveBayes']:
             rs_score = df[(df['dataset'] == datasets[i]) &
                           (df['classifier'] == classifier) &
-                          (df['method'] == 'RandomSubspace')]['accuracy'].iloc[0]
+                          (df['method'] == 'RandomSubspace')]['accuracy'].mean()
 
             row += '%.2f & ' % rs_score
 
@@ -113,7 +116,12 @@ def print_table(k, b=None, omega=None):
 
 
 if __name__ == '__main__':
+    print '\n\\subsection{Datasets}\n'
+
     print_datasets()
 
-    for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
-        print_table(k)
+    for b in ['1', '2', '3']:
+        print '\n\\subsection{Results, b = %s}\n' % b
+
+        for k in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]:
+            print_table(k, b)
