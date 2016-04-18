@@ -20,7 +20,3 @@ winequality
 chronic_kidney_disease
 biodegradation
 mice_protein_expression
-musk
-isolet
-internet_ads
-mutants
