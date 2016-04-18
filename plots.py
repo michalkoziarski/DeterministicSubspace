@@ -56,7 +56,7 @@ def plot_accuracy_bars(df):
     plt.title('Average accuracy over all datasets', y=1.03)
     plt.ylabel('Classification accuracy', labelpad=10)
     plt.show()
-    plt.savefig('accuracy_bars.png')
+    #plt.savefig('accuracy_bars.png')
 
 
 def plot_accuracy_k(df):
@@ -73,11 +73,11 @@ def plot_accuracy_k(df):
         accuracy = [[] for _ in methods]
 
         for k in k_values:
-            accuracy[0].append(df[(df['method'] == 'RandomSubspace') & (df['k'] == k) & (df['classifier'] == clf)]['accuracy'].mean())
-
+            accuracy[0].append(mean_accuracy(df, method='RandomSubspace', k=k, classifier=clf))
+            
             for i in range(len(alphas)):
                 alpha = alphas[i]
-                accuracy[i + 1].append(df[(df['method'] == 'DeterministicSubspace') & (df['alpha'] == alpha) & (df['k'] == k) & (df['classifier'] == clf)]['accuracy'].mean())
+                accuracy[i + 1].append(mean_accuracy(df, method='DeterministicSubspace', k=k, classifier=clf, alpha=alpha))
 
         plt.figure()
 
@@ -88,7 +88,6 @@ def plot_accuracy_k(df):
         plt.ylabel('Classification accuracy', labelpad=10)
         plt.xlabel('k')
         plt.legend(methods, loc=4)
-        plt.show()
         plt.savefig('accuracy_k_%s.png' % clf)
 
 
