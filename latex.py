@@ -66,7 +66,7 @@ def print_datasets():
            '\\end{table}\n')
 
 
-def print_table(k, b=None, omega=None):
+def print_table(k, b=None):
     df, datasets = load_df_and_datasets(k, b)
 
     print ('\\begin{table}\n'
@@ -102,10 +102,16 @@ def print_table(k, b=None, omega=None):
                               (df['method'] == 'DeterministicSubspace') &
                               (df['alpha'] == alpha)]['accuracy'].iloc[0]
 
-                if round(ds_score, 2) >= round(rs_score, 2):
-                    row += '\cellcolor[gray]{0.8} '
+                try:
+                    ds_score = float(ds_score)
+                    rs_score = float(rs_score)
 
-                row += '%.2f & ' % ds_score
+                    if round(ds_score, 2) >= round(rs_score, 2):
+                        row += '\cellcolor[gray]{0.8} '
+
+                    row += '%.2f & ' % ds_score
+                except ValueError:
+                    row += '%s & ' % '-'
 
         print row[:-2] + ' \\\\'
 
