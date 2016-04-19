@@ -116,12 +116,12 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
     def _score(self, X, y, cluster, feature, index):
-        return self.alpha * self._inside_score(X, y, cluster, feature) + \
-               (1. - self.alpha) * self._outside_score(cluster, feature, index)
+        return self.alpha * self._inside_score(X, y, cluster, feature, index) + \
+               (1. - self.alpha) * self._outside_score(X, y, cluster, feature, index)
 
-    def _inside_score(self, X, y, cluster, feature):
+    def _inside_score(self, X, y, cluster, feature, index):
         if not hasattr(self, 'mutual_information'):
-            self.mutual_information = [[0 for i in range(X.shape[1])] for j in range(X.shape[1])]
+            self.mutual_information = [[0 for _ in range(X.shape[1])] for _ in range(X.shape[1])]
 
             for i in range(X.shape[1]):
                 for j in range(i, X.shape[1]):
@@ -134,7 +134,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         else:
             return mi.mutual_information_2d(X[:, feature], y, normalized=True)
 
-    def _outside_score(self, cluster, feature, index):
+    def _outside_score(self, X, y, cluster, feature, index):
         count = 0.
         total = 1e-9
         extended_cluster = cluster + [feature]
@@ -209,3 +209,31 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * self.omega)
 
         return score
+
+
+class MIDeterministicSubspaceClassifier(DeterministicSubspaceClassifier):
+    def _outside_score(self, X, y, cluster, feature, index):
+        if not hasattr(self, 'mutual_information'):
+            self.mutual_information = [[0 for _ in range(X.shape[1])] for _ in range(X.shape[1])]
+
+            for i in range(X.shape[1]):
+                for j in range(i, X.shape[1]):
+                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
+                    self.mutual_information[i][j] = mutual_information
+                    self.mutual_information[j][i] = mutual_information
+
+        scores = []
+
+        for i in range(len(self.clusters)):
+            if i == index:
+                continue
+
+            cluster = self.clusters[i]
+
+            if len(cluster) > 0:
+                scores.append(np.min([self.mutual_information[feature][c] for c in cluster]))
+
+        if len(scores) > 0:
+            return 1. - np.mean(scores)
+        else:
+            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
