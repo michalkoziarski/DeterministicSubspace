@@ -1,5 +1,4 @@
 from subspace import *
-from datasets import *
 from precalculate_mi import *
 from time import gmtime, strftime
 from sklearn.base import clone
@@ -56,7 +55,7 @@ for dataset_name, dataset in datasets.iteritems():
     date = strftime('%Y_%m_%d_%H-%M-%S', gmtime())
     X, y = dataset
     n = X.shape[1] / 2
-    
+
     try:
         folds = load(dataset_name)
     except:
