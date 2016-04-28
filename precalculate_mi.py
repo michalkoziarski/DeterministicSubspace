@@ -1,7 +1,8 @@
 import os
+import sys
 import cPickle as pickle
 
-from datasets import load_all
+from datasets import *
 from mutual_info import mutual_information_2d
 from sklearn.cross_validation import StratifiedKFold
 
@@ -45,7 +46,15 @@ def load(fname):
 
 
 if __name__ == '__main__':
-    datasets = load_all()
+    if len(sys.argv) > 1:
+        try:
+            dataset = globals()['load_' + sys.argv[1]]()
+        except:
+            dataset = globals()['load_keel'](sys.argv[1])
+
+        datasets = {sys.argv[1]: dataset}
+    else:
+        datasets = load_all()
 
     for dataset_name, dataset in datasets.iteritems():
         X, y = dataset
