@@ -19,7 +19,7 @@ if len(sys.argv) > 1:
     except:
         dataset = globals()['load_keel'](sys.argv[1])
 
-    datasets = { sys.argv[1]: dataset }
+    datasets = {sys.argv[1]: dataset}
 else:
     datasets = load_all()
 

@@ -3,7 +3,6 @@ import numpy as np
 import mutual_info as mi
 
 from collections import Counter
-from sklearn import cross_validation
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
@@ -75,7 +74,7 @@ class BinaryMaskSubspaceClassifier(BaseSubspaceClassifier):
 
             mask.append(column)
             mask.append(mirrored)
-            
+
         # TODO : finish cluster initialization
 
         for _ in range(self.k):
@@ -121,7 +120,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
                     if feature in cluster:
                         score = -np.inf
                     else:
-                        score = score = self._score(X, y, cluster, feature, index)
+                        score = self._score(X, y, cluster, feature, index)
 
                     scores.append(score)
 
