@@ -35,7 +35,7 @@ classifiers = {
 }
 
 
-def test(X, y, train, test, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', date=None):
+def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', date=None):
     file_name = '%s_%s_k_%d.csv' % (dataset_name, date, k)
 
     if not os.path.exists('results'):
@@ -45,7 +45,7 @@ def test(X, y, train, test, clf, dataset_name, clf_name, k, method='-', alpha='-
         with open(os.path.join('results', file_name), 'w') as f:
             f.write('dataset, method, classifier, k, alpha, b, omega, accuracy\n')
 
-    score = clone(clf).fit(X[train], y[train]).score(X[test], y[test])
+    score = clone(clf).fit(X[train_idx], y[train_idx]).score(X[test_idx], y[test_idx])
 
     with open(os.path.join('results', file_name), 'a') as f:
         f.write('%s, %s, %s, %d, %s, %s, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, b, omega, score))
@@ -60,18 +60,18 @@ for dataset_name, dataset in datasets.iteritems():
     n = X.shape[1] / 2
     folds = load(dataset_name)
 
-    for train, test, mutual_information in folds:
+    for train_idx, test_idx, mutual_information in folds:
         for k in K:
-            test(X, y, train, test, RandomForestClassifier(n_estimators=k), dataset_name,
+            test(X, y, train_idx, test_idx, RandomForestClassifier(n_estimators=k), dataset_name,
                  'RandomForest', k, date=date)
 
             for clf_name, clf in classifiers.iteritems():
-                test(X, y, train, test, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
+                test(X, y, train_idx, test_idx, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
                      clf_name, k, 'RandomSubspace', date=date)
 
                 for alpha in [0., 0.25, 0.5, 0.75, 0.95]:
                     for b in [1, 2, 3]:
                         for omega in [1.]:
-                            test(X, y, train, test, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b,
+                            test(X, y, train_idx, test_idx, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b,
                                  alpha=alpha, omega=omega, mutual_information=mutual_information),
                                  dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega, date=date)
