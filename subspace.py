@@ -189,7 +189,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
 
         return 1. - (count / total)
 
-    def _correct_prediction_count(self, X, y, selected_clusters, cv=5):
+    def _correct_prediction_count(self, X, y, selected_clusters, cv=2):
         skf = StratifiedKFold(y, cv)
         predictions = []
         counts = []
