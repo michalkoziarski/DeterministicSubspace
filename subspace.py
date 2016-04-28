@@ -51,6 +51,44 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
 
+class BinaryMaskSubspaceClassifier(BaseSubspaceClassifier):
+    def fit(self, X, y):
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
+
+        self.clusters = []
+        self.clfs = []
+
+        mask = []
+        starting_position = 0
+
+        for i in range(X.shape[1]):
+            column = []
+
+            for j in range(self.k):
+                if starting_position <= j < starting_position + self.k / 2:
+                    column.append(1)
+                else:
+                    column.append(0)
+
+            mirrored = [int(not x) for x in column]
+
+            mask.append(column)
+            mask.append(mirrored)
+            
+        # TODO : finish cluster initialization
+
+        for _ in range(self.k):
+            self.clusters.append(np.random.permutation(range(X.shape[1]))[:self.n])
+
+        for cluster in self.clusters:
+            clf = clone(self.base_clf)
+            clf.fit(X[:, cluster], y)
+            self.clfs.append(clf)
+
+        return self
+
+
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
     def __init__(self, base_clf, k, n, alpha=0.5, b=2, omega=1., mutual_information=None):
         """
