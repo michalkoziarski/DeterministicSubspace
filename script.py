@@ -1,8 +1,6 @@
-import sys
-
 from subspace import *
 from datasets import *
-from precalculate_mi import load
+from precalculate_mi import *
 from time import gmtime, strftime
 from sklearn.base import clone
 from sklearn.tree import DecisionTreeClassifier
@@ -58,7 +56,12 @@ for dataset_name, dataset in datasets.iteritems():
     date = strftime('%Y_%m_%d_%H-%M-%S', gmtime())
     X, y = dataset
     n = X.shape[1] / 2
-    folds = load(dataset_name)
+    
+    try:
+        folds = load(dataset_name)
+    except:
+        folds = precalculate(X, y, CV)
+        save(folds, dataset_name)
 
     for train_idx, test_idx, mutual_information in folds:
         for k in K:
