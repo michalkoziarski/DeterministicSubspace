@@ -172,22 +172,23 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             return mi.mutual_information_2d(X[:, feature], y, normalized=True)
 
     def _outside_score(self, X, y, cluster, feature, index):
-        count = 0.
-        total = 1e-9
+        cluster_count = 0
+        similarities = []
         extended_cluster = cluster + [feature]
 
         for i in range(self.k):
             if i == index:
                 continue
 
-            current_cluster = self.clusters[i]
-            total += len(current_cluster)
+            if feature in self.clusters[i]:
+                cluster_count += 1
 
-            for current_feature in current_cluster:
-                if current_feature in extended_cluster:
-                    count += 1
+            similarities.append(len(set(extended_cluster) & set(self.clusters[i])) / float(len(extended_cluster)))
 
-        return 1. - (count / total)
+        similarity_score = 1 - np.max(similarities)
+        count_score = 1 - (float(cluster_count) / (self.k - 1))
+
+        return (similarity_score + count_score) / 2
 
     def _correct_prediction_count(self, X, y, selected_clusters, cv=2):
         skf = StratifiedKFold(y, cv)
