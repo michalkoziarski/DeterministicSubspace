@@ -19,10 +19,10 @@ def get_number_of_features(df):
     return n_features
 
 
-def load_df_and_datasets(k=None, b=None):
+def load_df_and_datasets(k=None, b=None, root_path='results'):
     frames = []
 
-    for file_name in os.listdir('results'):
+    for file_name in os.listdir(root_path):
         frames.append(pd.read_csv(os.path.join('results', file_name), sep=',', skipinitialspace=True))
 
     df = pd.concat(frames)
