@@ -24,31 +24,39 @@ if len(sys.argv) > 2:
 else:
     K = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
 
-classifiers = {
-    'DecisionTree': DecisionTreeClassifier(),
-    'kNN': KNeighborsClassifier(),
-    'SVM': LinearSVC(),
-    'NaiveBayes': GaussianNB()
-}
+if len(sys.argv) > 3:
+    classifiers = {sys.argv[3]: eval(sys.argv[3])}
+else:
+    classifiers = {
+        'DecisionTree': DecisionTreeClassifier(),
+        'kNN': KNeighborsClassifier(),
+        'SVM': LinearSVC(),
+        'NaiveBayes': GaussianNB()
+    }
+    
+if len(sys.argv) > 4:
+    root_path = sys.argv[4]
+else:
+    root_path = 'results'
 
 
-def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', b='-', omega='-', date=None):
-    file_name = '%s_%s_k_%d.csv' % (dataset_name, date, k)
+def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', date=None):
+    file_name = '%s_%s_k_%d_%s.csv' % (dataset_name, clf_name, k, date)
 
-    if not os.path.exists('results'):
-        os.makedirs('results')
+    if not os.path.exists(root_path):
+        os.makedirs(root_path)
 
-    if not os.path.exists(os.path.join('results', file_name)):
-        with open(os.path.join('results', file_name), 'w') as f:
-            f.write('dataset, method, classifier, k, alpha, b, omega, accuracy\n')
+    if not os.path.exists(os.path.join(root_path, file_name)):
+        with open(os.path.join(root_path, file_name), 'w') as f:
+            f.write('dataset, method, classifier, k, alpha, accuracy\n')
 
     score = clone(clf).fit(X[train_idx], y[train_idx]).score(X[test_idx], y[test_idx])
 
-    with open(os.path.join('results', file_name), 'a') as f:
-        f.write('%s, %s, %s, %d, %s, %s, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, b, omega, score))
+    with open(os.path.join(root_path, file_name), 'a') as f:
+        f.write('%s, %s, %s, %d, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, score))
 
-    print 'Dataset: %s, method: %s, classifier: %s, k: %d, alpha: %s, b: %s, omega: %s, accuracy: %.3f' % \
-          (dataset_name, method, clf_name, k, alpha, b, omega, score)
+    print 'Dataset: %s, method: %s, classifier: %s, k: %d, alpha: %s, accuracy: %.3f' % \
+          (dataset_name, method, clf_name, k, alpha, score)
 
 
 for dataset_name, dataset in datasets.iteritems():
@@ -71,9 +79,7 @@ for dataset_name, dataset in datasets.iteritems():
                 test(X, y, train_idx, test_idx, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
                      clf_name, k, 'RandomSubspace', date=date)
 
-                for alpha in [0., 0.25, 0.5, 0.75, 0.95]:
-                    for b in [1, 2, 3]:
-                        for omega in [1.]:
-                            test(X, y, train_idx, test_idx, DeterministicSubspaceClassifier(clf, k=k, n=n, b=b,
-                                 alpha=alpha, omega=omega, mutual_information=mutual_information),
-                                 dataset_name, clf_name, k, 'DeterministicSubspace', alpha, b, omega, date=date)
+                for alpha in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
+                    test(X, y, train_idx, test_idx, DeterministicSubspaceClassifier(clf, k=k, n=n,
+                         alpha=alpha, mutual_information=mutual_information),
+                         dataset_name, clf_name, k, 'DeterministicSubspace', alpha, date=date)
