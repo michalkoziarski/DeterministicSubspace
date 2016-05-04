@@ -1,9 +1,15 @@
+import sys
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
 from latex import load_df_and_datasets
 
+
+if len(sys.argv) > 1:
+    root_path = sys.argv[1]
+else:
+    root_path = 'results'
 
 plt.style.use('ggplot')
 matplotlib.rc('font', family='Liberation Mono')
@@ -91,7 +97,7 @@ def plot_accuracy_k(df):
 
 
 if __name__ == '__main__':
-    df, datasets = load_df_and_datasets()
+    df, datasets = load_df_and_datasets(root_path)
 
     plot_accuracy_bars(df)
     plot_accuracy_k(df)
