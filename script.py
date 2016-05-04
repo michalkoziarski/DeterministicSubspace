@@ -38,6 +38,11 @@ if len(sys.argv) > 4:
     root_path = sys.argv[4]
 else:
     root_path = 'results'
+    
+if len(sys.argv) > 5:
+    tested_classifier = eval(sys.argv[5])
+else:
+    tested_classifier = DeterministicSubspaceClassifier
 
 
 def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', date=None):
@@ -80,6 +85,6 @@ for dataset_name, dataset in datasets.iteritems():
                      clf_name, k, 'RandomSubspace', date=date)
 
                 for alpha in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
-                    test(X, y, train_idx, test_idx, DeterministicSubspaceClassifier(clf, k=k, n=n,
+                    test(X, y, train_idx, test_idx, tested_classifier(clf, k=k, n=n,
                          alpha=alpha, mutual_information=mutual_information),
                          dataset_name, clf_name, k, 'DeterministicSubspace', alpha, date=date)
