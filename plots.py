@@ -41,7 +41,7 @@ def plot_accuracy_bars(df):
     labels = ['RandomForest']
     colors = ['#E24A33']
 
-    for clf in [clf for clf in df['classifiers'].unique() if clf != 'RandomForest']:
+    for clf in [clf for clf in df['classifier'].unique() if clf != 'RandomForest']:
         accuracies.append(mean_accuracy(df, method='RandomSubspace', classifier=clf))
         labels.append('%s - RS' % clf)
         colors.append('#7A68A6')
@@ -64,7 +64,7 @@ def plot_accuracy_bars(df):
 
 
 def plot_accuracy_k(df):
-    for clf in [clf for clf in df['classifiers'].unique() if clf != 'RandomForest']:
+    for clf in [clf for clf in df['classifier'].unique() if clf != 'RandomForest']:
         k_values = range(5, 55, 5)
         alphas = [alpha for alpha in df['alpha'].unique() if alpha != '-']
         methods = ['RS'] + ['DS(%s)' % alpha for alpha in alphas]
