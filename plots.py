@@ -91,7 +91,7 @@ def plot_accuracy_k(df):
 
 
 if __name__ == '__main__':
-    df, datasets = load_df_and_datasets(root_path)
+    df, datasets = load_df_and_datasets(root_path=root_path)
 
     plot_accuracy_bars(df)
     plot_accuracy_k(df)
