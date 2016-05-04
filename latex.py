@@ -23,7 +23,7 @@ def load_df_and_datasets(k=None, b=None, root_path='results'):
     frames = []
 
     for file_name in os.listdir(root_path):
-        frames.append(pd.read_csv(os.path.join('results', file_name), sep=',', skipinitialspace=True))
+        frames.append(pd.read_csv(os.path.join(root_path, file_name), sep=',', skipinitialspace=True))
 
     df = pd.concat(frames)
 
