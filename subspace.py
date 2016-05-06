@@ -4,7 +4,7 @@ import mutual_info as mi
 
 from collections import Counter
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -50,46 +50,8 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
 
-class BinaryMaskSubspaceClassifier(BaseSubspaceClassifier):
-    def fit(self, X, y):
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
-
-        self.clusters = []
-        self.clfs = []
-
-        mask = []
-        starting_position = 0
-
-        for i in range(X.shape[1]):
-            column = []
-
-            for j in range(self.k):
-                if starting_position <= j < starting_position + self.k / 2:
-                    column.append(1)
-                else:
-                    column.append(0)
-
-            mirrored = [int(not x) for x in column]
-
-            mask.append(column)
-            mask.append(mirrored)
-
-        # TODO : finish cluster initialization
-
-        for _ in range(self.k):
-            self.clusters.append(np.random.permutation(range(X.shape[1]))[:self.n])
-
-        for cluster in self.clusters:
-            clf = clone(self.base_clf)
-            clf.fit(X[:, cluster], y)
-            self.clfs.append(clf)
-
-        return self
-
-
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5, b=2, omega=1., mutual_information=None):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=1, omega=1., scores=scores):
         """
         :param alpha: score (inside cluster) coefficient
         :param 1 - alpha: diversification (between clusters) coefficient
@@ -102,7 +64,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         self.alpha = alpha
         self.b = b
         self.omega = omega
-        self.mutual_information = mutual_information
+        self.scores = scores
 
         super(DeterministicSubspaceClassifier, self).__init__(base_clf, k, n)
 
@@ -153,25 +115,19 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         return self
 
     def _score(self, X, y, cluster, feature, index):
-        return self.alpha * self._inside_score(X, y, cluster, feature, index) + \
-               (1. - self.alpha) * self._outside_score(X, y, cluster, feature, index)
+        return self.alpha * self._quality_score(X, y, feature) + \
+               (1. - self.alpha) * self._diversity_score(X, y, cluster, feature, index)
 
-    def _inside_score(self, X, y, cluster, feature, index):
-        if not hasattr(self, 'mutual_information'):
-            self.mutual_information = [[0 for _ in range(X.shape[1])] for _ in range(X.shape[1])]
+    def _quality_score(self, X, y, feature):
+        if not hasattr(self, 'scores'):
+            self.scores = []
 
             for i in range(X.shape[1]):
-                for j in range(i, X.shape[1]):
-                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
-                    self.mutual_information[i][j] = mutual_information
-                    self.mutual_information[j][i] = mutual_information
+                self.scores.append(cross_val_score(self.base_clf, X[:, i].reshape(-1, 1), y, cv=5).mean())
 
-        if len(cluster) > 0:
-            return np.min([self.mutual_information[feature][c] for c in cluster])
-        else:
-            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
+        return self.scores[feature]
 
-    def _outside_score(self, X, y, cluster, feature, index):
+    def _diversity_score(self, X, y, cluster, feature, index):
         cluster_count = 0
         similarities = []
         extended_cluster = cluster + [feature]
@@ -247,31 +203,3 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * self.omega)
 
         return score
-
-
-class MIDeterministicSubspaceClassifier(DeterministicSubspaceClassifier):
-    def _outside_score(self, X, y, cluster, feature, index):
-        if not hasattr(self, 'mutual_information'):
-            self.mutual_information = [[0 for _ in range(X.shape[1])] for _ in range(X.shape[1])]
-
-            for i in range(X.shape[1]):
-                for j in range(i, X.shape[1]):
-                    mutual_information = mi.mutual_information_2d(X[:, i], X[:, j], normalized=True)
-                    self.mutual_information[i][j] = mutual_information
-                    self.mutual_information[j][i] = mutual_information
-
-        scores = []
-
-        for i in range(len(self.clusters)):
-            if i == index:
-                continue
-
-            cluster = self.clusters[i]
-
-            if len(cluster) > 0:
-                scores.append(np.min([self.mutual_information[feature][c] for c in cluster]))
-
-        if len(scores) > 0:
-            return 1. - np.mean(scores)
-        else:
-            return mi.mutual_information_2d(X[:, feature], y, normalized=True)
