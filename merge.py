@@ -11,7 +11,7 @@ else:
 if len(sys.argv) > 2:
     out_name = '%s.csv' % sys.argv[2]
 else:
-    out_name = 'results.csv'
+    out_name = '%s.csv' % root_path
 
 
 frames = []
