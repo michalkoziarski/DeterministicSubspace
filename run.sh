@@ -7,7 +7,7 @@ for i in 'seq 1 5'; do
     for clf in ${clfs[@]}; do
         for k in ${ks[@]}; do
             while read line; do
-                sbatch batch.sh $line $k $clf results DeterministicSubspaceClassifier
+                sbatch script.sh $line $k $clf results DeterministicSubspaceClassifier
             done < datasets.txt
         done
     done
