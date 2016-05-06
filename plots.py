@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from latex import load_df_and_datasets
+from datasets import *
 
 
 if len(sys.argv) > 1:
@@ -11,8 +11,44 @@ if len(sys.argv) > 1:
 else:
     root_path = 'results'
 
+
 plt.style.use('ggplot')
 matplotlib.rc('font', family='Liberation Mono')
+
+
+def get_number_of_features(df):
+    datasets = df['dataset'].unique()
+    n_features = []
+
+    for i in range(len(datasets)):
+        try:
+            X, _ = globals()['load_' + datasets[i]]()
+        except:
+            X, _ = globals()['load_keel'](datasets[i])
+
+        n_features.append(X.shape[1])
+
+    return n_features
+
+
+def load_df_and_datasets(k=None, b=None, root_path='results'):
+    frames = []
+
+    for file_name in os.listdir(root_path):
+        frames.append(pd.read_csv(os.path.join(root_path, file_name), sep=',', skipinitialspace=True))
+
+    df = pd.concat(frames)
+
+    if k:
+        df = df[df['k'] == k].reset_index()
+
+    if b:
+        df = df[(df['b'] == b) | (df['b'] == '-')].reset_index()
+
+    datasets = df['dataset'].unique()
+    features = get_number_of_features(df)
+
+    return df, datasets[np.argsort(features)]
 
 
 def mean_accuracy(df, method=None, classifier=None, k=None, alpha=None, b=None):
@@ -60,7 +96,7 @@ def plot_accuracy_bars(df):
     plt.ylim((0., 1.))
     plt.title('Average accuracy over all datasets', y=1.03)
     plt.ylabel('Classification accuracy', labelpad=10)
-    plt.savefig('accuracy_bars.png')
+    plt.savefig('plots_%s_bars.png' % root_path)
 
 
 def plot_accuracy_k(df):
@@ -87,7 +123,7 @@ def plot_accuracy_k(df):
         plt.ylabel('Classification accuracy', labelpad=10)
         plt.xlabel('k')
         plt.legend(methods, loc=4)
-        plt.savefig('accuracy_k_%s.png' % clf)
+        plt.savefig('plots_%s_%s.png' % (root_path, clf))
 
 
 if __name__ == '__main__':
