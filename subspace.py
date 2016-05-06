@@ -210,3 +210,25 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             score += math.erf((count / float(len(selected_clusters) + 1) - threshold) * self.omega)
 
         return score
+
+
+class MIDeterministicSubspaceClassifier(DeterministicSubspaceClassifier):
+    def _quality_score(self, X, y, feature):
+        if not hasattr(self, 'scores'):
+            self.scores = []
+
+            for i in range(X.shape[1]):
+                self.scores.append(mi.mutual_information_2d(X[:, i], y))
+
+        return self.scores[feature]
+
+
+class CorrDeterministicSubspaceClassifier(DeterministicSubspaceClassifier):
+    def _quality_score(self, X, y, feature):
+        if not hasattr(self, 'scores'):
+            self.scores = []
+
+            for i in range(X.shape[1]):
+                self.scores.append(np.abs(np.corrcoef(X[:, i], y)[0][1]))
+
+        return self.scores[feature]
