@@ -7,6 +7,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.cross_validation import KFold
 
 
 if len(sys.argv) > 1:
@@ -69,13 +70,7 @@ for dataset_name, dataset in datasets.iteritems():
     X, y = dataset
     n = X.shape[1] / 2
 
-    try:
-        folds = load(dataset_name)
-    except:
-        folds = precalculate(X, y, CV)
-        save(folds, dataset_name)
-
-    for train_idx, test_idx, mutual_information in folds:
+    for train_idx, test_idx in KFold(len(y), n_folds=2, shuffle=True):
         for k in K:
             test(X, y, train_idx, test_idx, RandomForestClassifier(n_estimators=k), dataset_name,
                  'RandomForest', k, date=date)
@@ -85,6 +80,5 @@ for dataset_name, dataset in datasets.iteritems():
                      clf_name, k, 'RandomSubspace', date=date)
 
                 for alpha in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
-                    test(X, y, train_idx, test_idx, tested_classifier(clf, k=k, n=n,
-                         alpha=alpha, mutual_information=mutual_information),
+                    test(X, y, train_idx, test_idx, tested_classifier(clf, k=k, n=n, alpha=alpha),
                          dataset_name, clf_name, k, 'DeterministicSubspace', alpha, date=date)
