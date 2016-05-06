@@ -8,6 +8,15 @@ from sklearn.cross_validation import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder
 
 
+def normalize(array):
+    array = np.array(array)
+    
+    if np.nanmax(array) != np.nanmin(array):
+        return (array - np.nanmin(array)) / (np.nanmax(array) - np.nanmin(array))
+    else:
+        return 0.5 * np.ones(len(array))
+
+
 class BaseSubspaceClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, base_clf, k, n):
         """
@@ -51,20 +60,18 @@ class RandomSubspaceClassifier(BaseSubspaceClassifier):
 
 
 class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
-    def __init__(self, base_clf, k, n, alpha=0.5, b=1, omega=1., scores=scores):
+    def __init__(self, base_clf, k, n, alpha=0.5, b=1, omega=1.):
         """
-        :param alpha: score (inside cluster) coefficient
-        :param 1 - alpha: diversification (between clusters) coefficient
+        :param alpha: quality coefficient
+        :param 1 - alpha: diversity coefficient
         :param b: number of clusters (multiplier of k) before pruning
         :param omega: multiplier used with error function
-        :param mutual_information: precalculated mutual information between every feature
         """
         assert b >= 1
 
         self.alpha = alpha
         self.b = b
         self.omega = omega
-        self.scores = scores
 
         super(DeterministicSubspaceClassifier, self).__init__(base_clf, k, n)
 
@@ -76,17 +83,21 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
         for _ in range(self.n):
             for index in range(int(self.k * self.b)):
                 cluster = self.clusters[index]
-                scores = []
+                quality_scores = []
+                diversity_scores = []
 
                 for feature in range(X.shape[1]):
                     if feature in cluster:
-                        score = -np.inf
+                        quality_scores.append(np.nan)
+                        diversity_scores.append(np.nan)
                     else:
-                        score = self._score(X, y, cluster, feature, index)
+                        quality_scores.append(self._quality_score(X, y, feature))
+                        diversity_scores.append(self._diversity_score(X, y, cluster, feature, index))
 
-                    scores.append(score)
-
-                cluster.append(np.argmax(scores))
+                quality_scores = normalize(quality_scores)
+                diversity_scores = normalize(diversity_scores)
+                scores = self.alpha * quality_scores + (1 - self.alpha) * diversity_scores
+                cluster.append(np.nanargmax(scores))
 
         if self.b > 1:
             selected_clusters = []
@@ -113,10 +124,6 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             self.clfs.append(clf)
 
         return self
-
-    def _score(self, X, y, cluster, feature, index):
-        return self.alpha * self._quality_score(X, y, feature) + \
-               (1. - self.alpha) * self._diversity_score(X, y, cluster, feature, index)
 
     def _quality_score(self, X, y, feature):
         if not hasattr(self, 'scores'):
