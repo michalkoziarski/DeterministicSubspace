@@ -1,5 +1,4 @@
 from subspace import *
-from precalculate_mi import *
 from time import gmtime, strftime
 from sklearn.base import clone
 from sklearn.tree import DecisionTreeClassifier
