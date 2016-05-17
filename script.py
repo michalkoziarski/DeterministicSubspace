@@ -12,6 +12,7 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import KFold
+from sklearn.preprocessing import StandardScaler
 
 
 if len(sys.argv) > 1:
@@ -51,6 +52,13 @@ else:
 
 
 def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', date=None):
+    X_train, y_train = X[train_idx], y[train_idx]
+    X_test, y_test = X[test_idx], y[test_idx]
+
+    scaler = StandardScaler().fit(X_train)
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
+
     file_name = '%s_%s_k_%d_%s.csv' % (dataset_name, clf_name, k, date)
 
     if not os.path.exists(root_path):
@@ -60,7 +68,7 @@ def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', 
         with open(os.path.join(root_path, file_name), 'w') as f:
             f.write('dataset, method, classifier, k, alpha, accuracy\n')
 
-    score = clone(clf).fit(X[train_idx], y[train_idx]).score(X[test_idx], y[test_idx])
+    score = clone(clf).fit(X_train, y_train).score(X_test, y_test)
 
     with open(os.path.join(root_path, file_name), 'a') as f:
         f.write('%s, %s, %s, %d, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, score))

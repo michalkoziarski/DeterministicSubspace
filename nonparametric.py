@@ -1,22 +1,18 @@
 import numpy as np
 
-from scipy.stats import kde
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.mixture import GMM
 from sklearn.neighbors import KernelDensity
 
 
 class ParzenKernelDensityClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, h=1.0):
+        self.h = h
+
     def fit(self, X, y):
         self.labels = np.unique(y)
         self.priors = [float(len(X[y == label])) / len(X) for label in self.labels]
-        self.kdes = []
-
-        for label in self.labels:
-            observations = X[y == label]
-            observations += np.random.random(observations.shape) * 1e-5
-
-            self.kdes.append(kde.gaussian_kde(observations.T, bw_method='scott'))
+        self.observations = [X[y == label] for label in self.labels]
 
         return self
 
@@ -27,11 +23,31 @@ class ParzenKernelDensityClassifier(BaseEstimator, ClassifierMixin):
             p = []
 
             for i in range(len(self.labels)):
-                p.append(self.kdes[i].evaluate(sample) * self.priors[i])
+                p.append(self.parzen_estimation(sample, i) * self.priors[i])
 
             predictions.append(self.labels[np.argmax(p)])
 
         return np.array(predictions)
+
+    def parzen_estimation(self, sample, cls):
+        k_n = 0.
+
+        for obs in self.observations[cls]:
+            k_n += self._window(self._kernel(obs, sample, self.h), self.h)
+
+        return (k_n / len(self.observations[cls])) / (self.h ** self.observations[cls].shape[1])
+
+    @staticmethod
+    def _kernel(x, x_i, h):
+        return (x - x_i) / h
+
+    @staticmethod
+    def _window(x, h):
+        for v in x:
+            if np.abs(v) > (h / 2.):
+                return 0
+
+        return 1
 
 
 class NNKernelDensityClassifier(BaseEstimator, ClassifierMixin):
