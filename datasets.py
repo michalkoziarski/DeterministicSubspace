@@ -101,7 +101,7 @@ def load_mice_protein_expression():
 
     download(url, unpack=False)
 
-    matrix = pd.read_excel(os.path.join('data', 'Data_Cortex_Nuclear.xls')).dropna().as_matrix()
+    matrix = pd.read_excel(os.path.join('data', file_name)).dropna().as_matrix()
     X, y = matrix[:, 1:-1], matrix[:, -1]
 
     return apply_encoding(X, y)
