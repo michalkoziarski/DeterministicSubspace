@@ -145,28 +145,20 @@ def safe_load(dataset):
             raise AttributeError('Dataset with specified name could not be found.')
 
 
+def get_names():
+    names = []
+
+    with open('datasets.txt', 'r') as f:
+        for dataset in f:
+            names.append(dataset[:-1])
+
+    return names
+
+
 def load_all():
-    return {
-        'coil2000': load_keel('coil2000'),
-        'movement_libras': load_keel('movement_libras'),
-        'optdigits': load_keel('optdigits'),
-        'segment': load_keel('segment'),
-        'sonar': load_keel('sonar'),
-        'spambase': load_keel('spambase'),
-        'splice': load_keel('splice'),
-        'texture': load_keel('texture'),
-        'vowel': load_keel('vowel'),
-        'vehicle': load_keel('vehicle'),
-        'mushroom': load_keel('mushroom'),
-        'automobile': load_keel('automobile'),
-        'ionosphere': load_keel('ionosphere'),
-        'thyroid': load_keel('thyroid'),
-        'wdbc': load_keel('wdbc'),
-        'spectfheart': load_keel('spectfheart'),
-        'dermatology': load_keel('dermatology'),
-        'ring': load_keel('ring'),
-        'winequality': load_winequality(),
-        'chronic_kidney_disease': load_chronic_kidney_disease(),
-        'biodegradation': load_biodegradation(),
-        'mice_protein_expression': load_mice_protein_expression()
-    }
+    datasets = {}
+
+    for name in get_names():
+        datasets[name] = safe_load(name)
+
+    return datasets
