@@ -135,6 +135,16 @@ def load_mutants():
     return load(url, file_name, skipcols=[-1])
 
 
+def safe_load(dataset):
+    if 'load_%s' % dataset in globals():
+        return globals()['load_%s' % dataset]()
+    else:
+        try:
+            return load_keel(dataset)
+        except:
+            raise AttributeError('Dataset with specified name could not be found.')
+
+
 def load_all():
     return {
         'coil2000': load_keel('coil2000'),
