@@ -38,7 +38,7 @@ def insert(dataset, fold, classifier, method, measure, k, n, alpha, score):
     timestamp = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
     execute('INSERT INTO trials VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' %
-            (timestamp, dataset, fold, classifier, method, measure, k, n, round(alpha, 2), round(score, 4)))
+            (timestamp, dataset, fold, classifier, method, measure, k, n, alpha, round(score, 4)))
 
 
 def export(path='results.csv'):
