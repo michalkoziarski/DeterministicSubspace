@@ -46,8 +46,16 @@ if args.n == '-':
 else:
     n = args.n
 
-k = int(args.k)
-alpha = float(args.alpha)
+if args.k == '-':
+    k = args.k
+else:
+    k = int(args.k)
+
+if args.alpha == '-':
+    alpha = args.alpha
+else:
+    alpha = float(args.alpha)
+
 fold = int(args.fold)
 
 if args.classifier == 'RandomForest':
