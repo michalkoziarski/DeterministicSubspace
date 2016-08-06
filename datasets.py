@@ -150,7 +150,7 @@ def get_names():
 
     with open('datasets.txt', 'r') as f:
         for dataset in f:
-            names.append(dataset[:-1])
+            names.append(dataset.rstrip())
 
     return names
 
