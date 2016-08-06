@@ -31,18 +31,19 @@ def create():
 
     if not os.path.exists(os.path.join(RESULTS_DIR, DB_PATH)):
         execute('''CREATE TABLE trials (timestamp text, dataset text, fold text,
-                classifier text, method text, measure text, k text, alpha text)''')
+                classifier text, method text, measure text, k text, n text, alpha text)''')
 
 
-def insert(dataset, fold, classifier, method, measure, k, alpha):
+def insert(dataset, fold, classifier, method, measure, k, n, alpha):
     timestamp = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
-    execute('INSERT INTO trials VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' %
-            (timestamp, dataset, fold, classifier, method, measure, k, alpha))
+    execute('INSERT INTO trials VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' %
+            (timestamp, dataset, fold, classifier, method, measure, k, n, alpha))
 
 
 def export(path='results.csv'):
     rows = execute('SELECT * FROM trials', fetch=True)
 
-    df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier', 'method', 'measure', 'k', 'alpha'])
+    df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier',
+                                     'method', 'measure', 'k', 'n', 'alpha'])
     df.to_csv(os.path.join(RESULTS_DIR, path), index=False)
