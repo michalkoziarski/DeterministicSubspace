@@ -9,7 +9,7 @@ DB_PATH = 'results.db'
 
 
 def execute(command, fetch=False):
-    conn = sqlite3.connect(os.path.join(RESULTS_DIR, DB_PATH))
+    conn = sqlite3.connect(os.path.join(RESULTS_DIR, DB_PATH), timeout=3600.)
 
     cursor = conn.cursor()
     cursor.execute(command)
