@@ -1,96 +1,96 @@
-import os
-import sys
+import argparse
+import cPickle as pickle
 
+from database import insert
 from subspace import *
 from datasets import *
 from nonparametric import *
-from time import gmtime, strftime
-from sklearn.base import clone
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.cross_validation import KFold
 from sklearn.preprocessing import StandardScaler
 
 
-if len(sys.argv) > 1:
-    try:
-        dataset = globals()['load_' + sys.argv[1]]()
-    except:
-        dataset = globals()['load_keel'](sys.argv[1])
-
-    datasets = {sys.argv[1]: dataset}
-else:
-    datasets = load_all()
-
-if len(sys.argv) > 2:
-    K = [int(sys.argv[2])]
-else:
-    K = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-
-if len(sys.argv) > 3:
-    classifiers = {sys.argv[3]: eval(sys.argv[3])}
-else:
-    classifiers = {
-        'DecisionTree': DecisionTreeClassifier(),
-        'kNN': KNeighborsClassifier(),
-        'SVM': LinearSVC(),
-        'NaiveBayes': GaussianNB()
-    }
-    
-if len(sys.argv) > 4:
-    root_path = sys.argv[4]
-else:
-    root_path = 'results'
-    
-if len(sys.argv) > 5:
-    tested_classifier = eval(sys.argv[5])
-else:
-    tested_classifier = DeterministicSubspaceClassifier
+AVAILABLE_DATASETS = get_names()
+AVAILABLE_CLASSIFIERS = {'CART': DecisionTreeClassifier, 'kNN': KNeighborsClassifier, 'SVM': LinearSVC,
+                         'NaiveBayes': GaussianNB, 'ParzenKDE': ParzenKernelDensityClassifier,
+                         'NNKDE': NNKernelDensityClassifier, 'GMM': GMMClassifier,
+                         'RandomForest': RandomForestClassifier}
 
 
-def test(X, y, train_idx, test_idx, clf, dataset_name, clf_name, k, method='-', alpha='-', date=None):
-    X_train, y_train = X[train_idx], y[train_idx]
-    X_test, y_test = X[test_idx], y[test_idx]
+parser = argparse.ArgumentParser(description='Calculate test error for single fold and store it in database.')
 
-    scaler = StandardScaler().fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_test = scaler.transform(X_test)
+parser.add_argument('-dataset', help='dataset name', choices=AVAILABLE_DATASETS, required=True)
+parser.add_argument('-fold', type=int, help='index of precalculated 5x2 cross-validation fold', choices=range(0, 10),
+                    required=True)
+parser.add_argument('-classifier', help='base classifier name', choices=AVAILABLE_CLASSIFIERS.keys(), required=True)
+parser.add_argument('-method', help='subspace method, either deterministic (DS), random (RS), or none (-, default)',
+                    choices=['DS', 'RS', '-'], required=True)
+parser.add_argument('-measure', help='quality measure of DS method',
+                    choices=['accuracy', 'mutual_information', 'correlation', '-'], required=True, default='-')
+parser.add_argument('-k', help='number of subspaces', required=True, default='-')
+parser.add_argument('-n', help='number of features per subspace, half of total by default',
+                    required=False, default='-')
+parser.add_argument('-alpha', help='quality coefficient of DS method, value in range from 0 to 1',
+                    required=True, default='-')
 
-    file_name = '%s_%s_k_%d_%s.csv' % (dataset_name, clf_name, k, date)
-
-    if not os.path.exists(root_path):
-        os.makedirs(root_path)
-
-    if not os.path.exists(os.path.join(root_path, file_name)):
-        with open(os.path.join(root_path, file_name), 'w') as f:
-            f.write('dataset, method, classifier, k, alpha, accuracy\n')
-
-    score = clone(clf).fit(X_train, y_train).score(X_test, y_test)
-
-    with open(os.path.join(root_path, file_name), 'a') as f:
-        f.write('%s, %s, %s, %d, %s, %.3f\n' % (dataset_name, method, clf_name, k, alpha, score))
-
-    print 'Dataset: %s, method: %s, classifier: %s, k: %d, alpha: %s, accuracy: %.3f' % \
-          (dataset_name, method, clf_name, k, alpha, score)
+args = parser.parse_args()
 
 
-for dataset_name, dataset in datasets.iteritems():
-    date = strftime('%Y_%m_%d_%H-%M-%S', gmtime())
-    X, y = dataset
+X, y = safe_load(args.dataset)
+
+if args.n == '-':
     n = X.shape[1] / 2
+else:
+    n = args.n
 
-    for train_idx, test_idx in KFold(len(y), n_folds=2, shuffle=True):
-        for k in K:
-            test(X, y, train_idx, test_idx, RandomForestClassifier(n_estimators=k), dataset_name,
-                 'RandomForest', k, date=date)
+k = int(args.k)
+alpha = float(args.alpha)
+fold = int(args.fold)
 
-            for clf_name, clf in classifiers.iteritems():
-                test(X, y, train_idx, test_idx, RandomSubspaceClassifier(clf, k=k, n=n), dataset_name,
-                     clf_name, k, 'RandomSubspace', date=date)
+if args.classifier == 'RandomForest':
+    base_classifier = RandomForestClassifier(n_estimators=k)
+else:
+    base_classifier = AVAILABLE_CLASSIFIERS[args.classifier]()
 
-                for alpha in [0., .1, .2, .3, .4, .5, .6, .7, .8, .9]:
-                    test(X, y, train_idx, test_idx, tested_classifier(clf, k=k, n=n, alpha=alpha),
-                         dataset_name, clf_name, k, 'DeterministicSubspace', alpha, date=date)
+if args.method == 'DS':
+    if args.measure == 'accuracy':
+        method = DeterministicSubspaceClassifier
+    elif args.measure == 'mutual_information':
+        method = MIDeterministicSubspaceClassifier
+    elif args.measure == 'correlation':
+        method = CorrDeterministicSubspaceClassifier
+    else:
+        raise AttributeError('Proper quality measure of DS method has to be specified.')
+
+    classifier = method(base_classifier, k=k, n=n, alpha=alpha)
+elif args.method == 'RS':
+    classifier = RandomSubspaceClassifier(base_classifier, k=k, n=n)
+else:
+    classifier = base_classifier
+
+folds = pickle.load(open('folds.pickle', 'r'))
+
+train_idx, test_idx = folds[args.dataset][fold]
+
+X_train, y_train = X[train_idx], y[train_idx]
+X_test, y_test = X[test_idx], y[test_idx]
+
+scaler = StandardScaler().fit(X_train)
+
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+print 'Calculating test error...'
+
+score = classifier.fit(X_train, y_train).score(X_test, y_test)
+
+print 'Test error of %.4f calculated.' % score
+print 'Trying to save the result to database...'
+
+insert(dataset=args.dataset, fold=args.fold, classifier=args.classifier, method=args.method, measure=args.measure,
+       k=args.k, n=args.n, alpha=args.alpha, score=score)
+
+print 'Results saved.'
