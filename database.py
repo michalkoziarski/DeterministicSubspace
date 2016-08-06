@@ -30,20 +30,20 @@ def create():
         os.makedirs(RESULTS_DIR)
 
     if not os.path.exists(os.path.join(RESULTS_DIR, DB_PATH)):
-        execute('''CREATE TABLE trials (timestamp text, dataset text, fold text,
-                classifier text, method text, measure text, k text, n text, alpha text)''')
+        execute('''CREATE TABLE trials (timestamp text, dataset text, fold text, classifier text,
+                method text, measure text, k text, n text, alpha text, score text)''')
 
 
-def insert(dataset, fold, classifier, method, measure, k, n, alpha):
+def insert(dataset, fold, classifier, method, measure, k, n, alpha, score):
     timestamp = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
-    execute('INSERT INTO trials VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' %
-            (timestamp, dataset, fold, classifier, method, measure, k, n, alpha))
+    execute('INSERT INTO trials VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")' %
+            (timestamp, dataset, fold, classifier, method, measure, k, n, round(alpha, 2), round(score, 4)))
 
 
 def export(path='results.csv'):
     rows = execute('SELECT * FROM trials', fetch=True)
 
-    df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier',
-                                     'method', 'measure', 'k', 'n', 'alpha'])
+    df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier', 'method',
+                                     'measure', 'k', 'n', 'alpha', 'score'])
     df.to_csv(os.path.join(RESULTS_DIR, path), index=False)
