@@ -1,14 +1,22 @@
 #!/bin/bash
 
-ks=(5 10 15 20 25 30 35 40 45 50)
-clfs=("DecisionTreeClassifier()" "KNeighborsClassifier()" "LinearSVC()" "GaussianNB()")
+classifiers=("CART" "kNN" "SVM" "NaiveBayes" "ParzenKDE" "NNKDE" "GMM")
+measures=("accuracy" "mutual_information" "correlation")
 
-for i in {1..5}; do
-    for clf in ${clfs[@]}; do
-        for k in ${ks[@]}; do
-            while read line; do
-                sbatch script.sh $line $k $clf results DeterministicSubspaceClassifier
-            done < datasets.txt
+while read dataset; do
+    for fold in $(seq 0 9); do
+        for k in $(seq 5 5 50); do
+            sbatch script.sh $dataset $fold RandomForest - - $k -
+
+            for classifier in ${classifiers[@]}; do
+                sbatch script.sh $dataset $fold $classifier RS - $k -
+
+                for alpha in $(seq 0.0 0.1 1.0); do
+                    for measure in ${measures[@]}; do
+                        sbatch script.sh $dataset $fold $classifier DS $measure $k $alpha
+                    done
+                done
+            done
         done
     done
-done
+done < datasets.txt

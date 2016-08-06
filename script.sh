@@ -6,4 +6,4 @@
 module add plgrid/tools/python/2.7.9
 
 cd $HOME/DeterministicSubspace/DeterministicSubspace
-python script.py $1 $2 $3 $4 $5
+python script.py -dataset $1 -fold $2 -classifier $3 -method $4 -measure $5 -k $6 -alpha $7
