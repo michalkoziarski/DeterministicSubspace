@@ -28,7 +28,7 @@ parser.add_argument('-fold', type=int, help='index of precalculated 5x2 cross-va
                     required=True)
 parser.add_argument('-classifier', help='base classifier name', choices=AVAILABLE_CLASSIFIERS.keys(), required=True)
 parser.add_argument('-method', help='subspace method, either deterministic (DS), random (RS), or none (-, default)',
-                    choices=['DS', 'RS', '-'])
+                    choices=['DS', 'RS', '-'], default='-')
 parser.add_argument('-measure', help='quality measure of DS method',
                     choices=['accuracy', 'mutual_information', 'correlation', '-'], default='-')
 parser.add_argument('-k', help='number of subspaces', required=True, default='-')
