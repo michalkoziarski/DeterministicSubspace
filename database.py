@@ -75,7 +75,7 @@ def update(dataset, fold, classifier, method, measure, k, n, alpha, score):
     score = round(score, 4)
 
     execute('UPDATE trials SET score="%s" WHERE dataset="%s" AND fold="%s" AND classifier="%s" AND method="%s" '
-            'AND measure="%s" AND k="%s" AND n="%s" AND alpha="%s"' %
+            'AND measure="%s" AND k="%s" AND n="%s" AND alpha="%s" AND score="-"' %
             (score, dataset, fold, classifier, method, measure, k, n, alpha))
 
 
