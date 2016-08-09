@@ -82,7 +82,7 @@ def load_winequality():
 
 
 def load_chronic_kidney_disease():
-    url = 'https://s3.amazonaws.com/michalkoziarski/chronic_kidney_disease_full.arff'
+    url = 'https://github.com/michalkoziarski/datasets/raw/master/chronic_kidney_disease_full.arff'
     file_name = 'chronic_kidney_disease_full.arff'
 
     return load(url, file_name, unpack=False, skiprows=145)
@@ -108,14 +108,14 @@ def load_mice_protein_expression():
 
 
 def load_musk():
-    url = 'https://s3.amazonaws.com/michalkoziarski/musk.data.zip'
+    url = 'https://github.com/michalkoziarski/datasets/raw/master/musk.data.zip'
     file_name = 'musk.data'
 
     return load(url, file_name, start=2)
 
 
 def load_isolet():
-    url = 'https://s3.amazonaws.com/michalkoziarski/isolet.data.zip'
+    url = 'https://github.com/michalkoziarski/datasets/raw/master/isolet.data.zip'
     file_name = 'isolet.data'
 
     return load(url, file_name)
