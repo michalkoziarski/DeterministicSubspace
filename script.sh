@@ -26,4 +26,4 @@ while read dataset; do
             done
         done
     done
-done < datase
+done < dataset.txt
