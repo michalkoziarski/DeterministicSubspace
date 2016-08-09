@@ -142,7 +142,7 @@ def safe_load(dataset):
         try:
             return load_keel(dataset)
         except:
-            raise AttributeError('Dataset with specified name could not be found.')
+            raise AttributeError('Dataset with specified name (%s) could not be found.' % dataset)
 
 
 def get_names():
