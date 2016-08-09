@@ -130,7 +130,7 @@ class DeterministicSubspaceClassifier(BaseSubspaceClassifier):
             self.scores = []
 
             for i in range(X.shape[1]):
-                self.scores.append(cross_val_score(self.base_clf, X[:, i].reshape(-1, 1), y, cv=5).mean())
+                self.scores.append(cross_val_score(self.base_clf, X[:, i].reshape(-1, 1), y, cv=2).mean())
 
         return self.scores[feature]
 
