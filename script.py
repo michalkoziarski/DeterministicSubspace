@@ -4,7 +4,7 @@ import cPickle as pickle
 import database as db
 
 from subspace import *
-from datasets import safe_load, get_names
+from datasets import quick_load, get_names
 from nonparametric import *
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -41,7 +41,7 @@ parser.add_argument('-repeat', type=bool, help='whether to conduct experiment ag
 args = parser.parse_args()
 
 
-X, y = safe_load(args.dataset)
+X, y = quick_load(args.dataset)
 
 if args.n == '-':
     n = X.shape[1] / 2
