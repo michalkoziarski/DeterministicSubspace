@@ -1,4 +1,3 @@
-import sys
 import argparse
 import cPickle as pickle
 import database as db
