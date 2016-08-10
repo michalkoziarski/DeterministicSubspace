@@ -5,8 +5,6 @@
 
 module add plgrid/tools/python/2.7.9
 
-cd $HOME/DeterministicSubspace/DeterministicSubspace
-
 classifiers=("CART" "kNN" "SVM" "NaiveBayes" "ParzenKDE" "NNKDE" "GMM")
 measures=("accuracy" "mutual_information" "correlation")
 

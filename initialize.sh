@@ -5,5 +5,4 @@
 
 module add plgrid/tools/python/2.7.9
 
-cd $HOME/DeterministicSubspace/DeterministicSubspace
 python initialize.py
