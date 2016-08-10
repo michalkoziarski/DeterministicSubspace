@@ -2,9 +2,6 @@ import os
 import urllib
 import zipfile
 import numpy as np
-import pandas as pd
-
-from sklearn import preprocessing
 
 
 def download_dataset(url, unpack=True):
@@ -27,6 +24,8 @@ def download_dataset(url, unpack=True):
 
 
 def apply_encoding(X, y, encode_features=True):
+    from sklearn import preprocessing
+
     y = preprocessing.LabelEncoder().fit(y).transform(y)
 
     if encode_features:
@@ -45,11 +44,13 @@ def apply_encoding(X, y, encode_features=True):
 
 def load(file_name, url=None, download=True, skiprows=0, unpack=True, encode=True, separator=',', start=0,
          skipcols=None, nrows=None):
+    from pandas import read_csv
+
     if download and url is not None:
         download_dataset(url, unpack=unpack)
 
-    df = pd.read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
-                     error_bad_lines=False, sep=separator, na_values='?', nrows=nrows)
+    df = read_csv(os.path.join('data', file_name), header=None, skiprows=skiprows, skipinitialspace=True,
+                  error_bad_lines=False, sep=separator, na_values='?', nrows=nrows)
 
     if skipcols:
         df = df.drop(df.columns[skipcols], axis=1)
@@ -102,13 +103,15 @@ def load_biodegradation(download=True):
 
 
 def load_mice_protein_expression(download=True):
+    from pandas import read_excel
+
     url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/00342/Data_Cortex_Nuclear.xls'
     file_name = 'Data_Cortex_Nuclear.xls'
 
     if download:
         download_dataset(url, unpack=False)
 
-    matrix = pd.read_excel(os.path.join('data', file_name)).dropna().as_matrix()
+    matrix = read_excel(os.path.join('data', file_name)).dropna().as_matrix()
     X, y = matrix[:, 1:-1], matrix[:, -1]
 
     return apply_encoding(X, y)

@@ -1,7 +1,6 @@
 import os
 import datetime
 import sqlite3
-import pandas as pd
 
 
 RESULTS_DIR = 'results'
@@ -80,6 +79,8 @@ def update(dataset, fold, classifier, method, measure, k, n, alpha, score):
 
 
 def export(path='results.csv'):
+    import pandas as pd
+
     rows = execute('SELECT * FROM trials', fetch=True)
 
     df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier', 'method',
