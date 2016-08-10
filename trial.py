@@ -14,6 +14,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
 
+AVAILABLE_DATASETS = get_names()
+AVAILABLE_CLASSIFIERS = {'CART': DecisionTreeClassifier, 'kNN': KNeighborsClassifier, 'SVM': LinearSVC,
+                         'NaiveBayes': GaussianNB, 'ParzenKDE': ParzenKernelDensityClassifier,
+                         'NNKDE': NNKernelDensityClassifier, 'GMM': GMMClassifier,
+                         'RandomForest': RandomForestClassifier}
+
+
 def run_trial(args):
     X, y = quick_load(args['dataset'])
 
@@ -64,7 +71,9 @@ def run_trial(args):
                  args['n'], args['alpha'])
 
     if args['repeat'] is False and not db.reserve(*arguments):
-        sys.exit('Not repeating the trial, quiting.')
+        print 'Not repeating the trial, quiting.'
+
+        return
 
     folds = pickle.load(open('folds.pickle', 'r'))
 
@@ -93,29 +102,23 @@ def run_trial(args):
     print 'Results saved.'
 
 
-AVAILABLE_DATASETS = get_names()
-AVAILABLE_CLASSIFIERS = {'CART': DecisionTreeClassifier, 'kNN': KNeighborsClassifier, 'SVM': LinearSVC,
-                         'NaiveBayes': GaussianNB, 'ParzenKDE': ParzenKernelDensityClassifier,
-                         'NNKDE': NNKernelDensityClassifier, 'GMM': GMMClassifier,
-                         'RandomForest': RandomForestClassifier}
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Calculate test error for single fold and store it in database.')
 
+    parser.add_argument('-dataset', help='dataset name', choices=AVAILABLE_DATASETS, required=True)
+    parser.add_argument('-fold', type=int, help='index of precalculated 5x2 cross-validation fold', choices=range(0, 10),
+                        required=True)
+    parser.add_argument('-classifier', help='base classifier name', choices=AVAILABLE_CLASSIFIERS.keys(), required=True)
+    parser.add_argument('-method', help='subspace method, either deterministic (DS), random (RS), or none (-, default)',
+                        choices=['DS', 'RS', '-'], default='-')
+    parser.add_argument('-measure', help='quality measure of DS method',
+                        choices=['accuracy', 'mutual_information', 'correlation', '-'], default='-')
+    parser.add_argument('-k', help='number of subspaces', default='-')
+    parser.add_argument('-n', help='number of features per subspace, half of total by default', default='-')
+    parser.add_argument('-alpha', help='quality coefficient of DS method, value in range from 0 to 1', default='-')
+    parser.add_argument('-repeat', type=bool, help='whether to conduct experiment again if result is already present',
+                        default=False)
 
-parser = argparse.ArgumentParser(description='Calculate test error for single fold and store it in database.')
+    args = vars(parser.parse_args())
 
-parser.add_argument('-dataset', help='dataset name', choices=AVAILABLE_DATASETS, required=True)
-parser.add_argument('-fold', type=int, help='index of precalculated 5x2 cross-validation fold', choices=range(0, 10),
-                    required=True)
-parser.add_argument('-classifier', help='base classifier name', choices=AVAILABLE_CLASSIFIERS.keys(), required=True)
-parser.add_argument('-method', help='subspace method, either deterministic (DS), random (RS), or none (-, default)',
-                    choices=['DS', 'RS', '-'], default='-')
-parser.add_argument('-measure', help='quality measure of DS method',
-                    choices=['accuracy', 'mutual_information', 'correlation', '-'], default='-')
-parser.add_argument('-k', help='number of subspaces', default='-')
-parser.add_argument('-n', help='number of features per subspace, half of total by default', default='-')
-parser.add_argument('-alpha', help='quality coefficient of DS method, value in range from 0 to 1', default='-')
-parser.add_argument('-repeat', type=bool, help='whether to conduct experiment again if result is already present',
-                    default=False)
-
-args = vars(parser.parse_args())
-
-run_trial(args)
+    run_trial(args)
