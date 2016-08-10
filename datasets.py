@@ -149,7 +149,7 @@ def safe_load(dataset, download=True):
         try:
             return load_keel(dataset, download=download)
         except:
-            raise AttributeError('Dataset with specified name (%s) could not be found.' % dataset)
+            raise AttributeError('Dataset with specified name (%s) could not be loaded.' % dataset)
 
 
 def quick_load(dataset):
