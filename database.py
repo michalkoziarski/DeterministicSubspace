@@ -86,3 +86,7 @@ def export(path='results.csv'):
     df = pd.DataFrame(rows, columns=['timestamp', 'dataset', 'fold', 'classifier', 'method',
                                      'measure', 'k', 'n', 'alpha', 'score'])
     df.to_csv(os.path.join(RESULTS_DIR, path), index=False)
+
+
+def clear_reservations():
+    execute('DELETE FROM trials WHERE score="-"')
