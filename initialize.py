@@ -25,6 +25,8 @@ for dataset in get_names():
     except:
         print '[Warning] Could not load %s dataset.' % dataset
 
-print 'Creating database...'
+print 'Creating databases...'
 
-db.create()
+db.create('results.db')
+db.create('pending.db')
+db.create('active.db')

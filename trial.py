@@ -66,14 +66,6 @@ def run_trial(args):
     else:
         classifier = base_classifier
 
-    arguments = (args['dataset'], args['fold'], args['classifier'], args['method'], args['measure'], args['k'],
-                 args['n'], args['alpha'])
-
-    if args['repeat'] is False and not db.reserve(*arguments):
-        print 'Not repeating the trial, quiting.'
-
-        return
-
     folds = pickle.load(open('folds.pickle', 'r'))
 
     train_idx, test_idx = folds[args['dataset']][fold]
@@ -93,10 +85,7 @@ def run_trial(args):
     print 'Test error of %.4f calculated.' % score
     print 'Trying to save the result to database...'
 
-    if args['repeat']:
-        db.insert(*arguments, score=score)
-    else:
-        db.update(*arguments, score=score)
+    db.submit_result(args, score)
 
     print 'Results saved.'
 
@@ -115,8 +104,6 @@ if __name__ == "__main__":
     parser.add_argument('-k', help='number of subspaces', default='-')
     parser.add_argument('-n', help='number of features per subspace, half of total by default', default='-')
     parser.add_argument('-alpha', help='quality coefficient of DS method, value in range from 0 to 1', default='-')
-    parser.add_argument('-repeat', type=bool, help='whether to conduct experiment again if result is already present',
-                        default=False)
 
     args = vars(parser.parse_args())
 
