@@ -9,7 +9,6 @@ texture
 vowel
 vehicle
 mushroom
-automobile
 ionosphere
 thyroid
 wdbc
