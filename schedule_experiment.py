@@ -4,6 +4,10 @@ import datasets
 
 CLASSIFIERS = ["CART", "kNN", "SVM", "NaiveBayes", "ParzenKDE", "NNKDE", "GMM"]
 MEASURES = ["accuracy", "mutual_information", "correlation"]
+KS = range(5, 55, 5)
+ALPHAS = [i / 10. for i in range(11)]
+
+FOLDS = range(10)
 DATASETS = datasets.get_names()
 
 
@@ -24,14 +28,14 @@ def prepare_args(dataset, fold, classifier, method='-', measure='-', k='-', n='-
 
 
 for dataset in DATASETS:
-    for fold in range(10):
-        for k in range(5, 55, 5):
+    for fold in FOLDS:
+        for k in KS:
             db.add_to_pending(prepare_args(dataset, fold, 'RandomForest', k=k))
 
             for classifier in CLASSIFIERS:
                 db.add_to_pending(prepare_args(dataset, fold, classifier, method='RS', k=k))
 
-                for alpha in [i / 10. for i in range(11)]:
+                for alpha in ALPHAS:
                     for measure in MEASURES:
                         db.add_to_pending(prepare_args(dataset, fold, classifier, method='DS', k=k,
                                                        measure=measure, alpha=alpha))
